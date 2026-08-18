@@ -107,6 +107,14 @@ Holodex API の利用条件は [Holodex API の規約](https://docs.holodex.net/
 本プロジェクトは非公式であり、Holodex、および各 VTuber・運営企業とは一切関係が
 ありません。
 
+## ライセンス
+
+このリポジトリのコードは [MIT License](./LICENSE) です。
+
+配信データそのものは対象外です。本サイトが表示している配信情報は Holodex API を
+通じて取得したもので、その利用条件は Holodex 側の規約に従います。MIT はこの
+リポジトリのソースコードにのみ適用されます。
+
 ## エージェント向けの指示
 
 `AGENTS.md` に集約しています。`CLAUDE.md` はそこへの参照です。
