@@ -40,7 +40,7 @@ export function AgencyStreamGrid({ agency, streams, onBack }: Props) {
                 rel="noreferrer"
                 title={stream.title}
               >
-                <ChannelAvatar photoUrl={stream.channelPhoto} size={56} />
+                <ChannelAvatar src={stream.channelPhoto} size={56} />
                 <span className="stream-channel">{stream.channelName}</span>
                 <span className="stream-viewers">
                   {formatCount(stream.viewers)} 人

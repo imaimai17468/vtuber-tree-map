@@ -1,12 +1,10 @@
 import { useState, type ReactNode } from "react";
 import "@/live-map/liveMap.css";
 import { agenciesResponseSchema, type AgenciesResponse } from "@/api";
+import { AgencyMapView } from "@/live-map/AgencyMapView";
 import { AgencyStreamPanel } from "@/live-map/AgencyStreamPanel";
-import { AgencyTreemap } from "@/live-map/AgencyTreemap";
 import { DataSourceCredit } from "@/live-map/DataSourceCredit";
-import { formatCount, formatUpdatedAt } from "@/live-map/format";
 import { usePolledJson } from "@/live-map/usePolledJson";
-import { ViewerScaleLegend } from "@/live-map/ViewerScaleLegend";
 
 /**
  * Matches the Worker's cron period in `wrangler.toml`; polling faster only
@@ -19,34 +17,43 @@ const REFRESH_MS = 120_000;
 const parseAgencies = (payload: unknown): AgenciesResponse =>
   agenciesResponseSchema.parse(payload);
 
+/**
+ * Holds the fetch and the one piece of navigation state, and picks the view.
+ * Every branch below is a component that takes what it renders as props, so the
+ * views are testable without a network.
+ */
 export function App() {
   const agencies = usePolledJson("/api/agencies", REFRESH_MS, parseAgencies);
   const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
 
   if (agencies.status === "loading") {
-    return <Shell>読み込み中…</Shell>;
+    return <StatusPage>読み込み中…</StatusPage>;
   }
   if (agencies.status === "error") {
-    return <Shell>いま配信状況を取得できません（{agencies.message}）</Shell>;
+    return (
+      <StatusPage>
+        いま配信状況を取得できません（{agencies.message}）
+      </StatusPage>
+    );
   }
 
   const { updatedAt, agencies: list } = agencies.data;
 
-  // Reachable in the small hours: unwatched streams are filtered out upstream of
-  // this, so an empty list means nobody with an audience is on air.
+  // Reachable in the small hours: unwatched streams are filtered out before the
+  // snapshot is built, so an empty list means nobody with an audience is on air.
   if (list.length === 0) {
-    return <Shell>いま配信している人はいません。</Shell>;
+    return <StatusPage>いま配信している人はいません。</StatusPage>;
   }
 
-  const totalLive = list.reduce((sum, agency) => sum + agency.liveCount, 0);
-  const totalViewers = list.reduce(
-    (sum, agency) => sum + agency.totalViewers,
-    0
-  );
+  // Derived, not synchronised: an agency leaves the list as soon as its last
+  // watched stream ends, which happens between polls while its view is open.
+  // Its detail view would have nothing left to show, so the map — the current
+  // truth — is what to fall back to.
+  const isSelectionLive = list.some((agency) => agency.id === selectedAgencyId);
 
-  if (selectedAgencyId !== null) {
+  if (selectedAgencyId !== null && isSelectionLive) {
     return (
-      <main className="page">
+      <Page>
         <AgencyStreamPanel
           key={selectedAgencyId}
           agencyId={selectedAgencyId}
@@ -55,41 +62,43 @@ export function App() {
             setSelectedAgencyId(null);
           }}
         />
-        <DataSourceCredit />
-      </main>
+      </Page>
     );
   }
 
   return (
+    <Page>
+      <AgencyMapView
+        agencies={list}
+        updatedAt={updatedAt}
+        onSelectAgency={setSelectedAgencyId}
+      />
+    </Page>
+  );
+}
+
+/**
+ * The frame every view shares. The attribution is part of it rather than of each
+ * view, because the Holodex terms require it wherever their material is exposed
+ * and a view added later would otherwise ship without it.
+ */
+function Page({ children }: { readonly children: ReactNode }) {
+  return (
     <main className="page">
-      <header className="page-header">
-        <h1 className="page-title">VTuber Tree Map</h1>
-        <p className="page-stats">
-          {formatCount(totalLive)} 人配信中 ／ 合計視聴者{" "}
-          {formatCount(totalViewers)} 人 ／ {formatUpdatedAt(updatedAt)} 時点
-        </p>
-      </header>
-
-      <p className="page-hint">
-        面積は配信中のライバー数、色の濃さは事務所の合計視聴者数です。視聴者が 0
-        人の配信は除いています。
-      </p>
-      <ViewerScaleLegend />
-
-      <AgencyTreemap agencies={list} onSelectAgency={setSelectedAgencyId} />
+      {children}
       <DataSourceCredit />
     </main>
   );
 }
 
-function Shell({ children }: { readonly children: ReactNode }) {
+/** The frame with a title and a single line of text: loading, error, nobody live. */
+function StatusPage({ children }: { readonly children: ReactNode }) {
   return (
-    <main className="page">
+    <Page>
       <header className="page-header">
         <h1 className="page-title">VTuber Tree Map</h1>
       </header>
       <p className="empty">{children}</p>
-      <DataSourceCredit />
-    </main>
+    </Page>
   );
 }

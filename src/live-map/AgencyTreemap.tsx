@@ -1,24 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import type { AgencySummary } from "@/api";
 import { formatCount } from "@/live-map/format";
-import { layoutAgencies, type AgencyTile } from "@/live-map/treemapLayout";
-
-/**
- * Below these a label would be clipped rather than shortened, so the tile shows
- * nothing and the hover card carries the values instead. The stats never appear
- * without the name above them: on a tall narrow sliver the name drops out on
- * width while the stats still clear the height, and a count with nobody's name
- * attached says nothing.
- */
-const NAME_MIN_WIDTH = 68;
-const NAME_MIN_HEIGHT = 34;
-const STATS_MIN_HEIGHT = 62;
-
-const fitsName = (tile: AgencyTile): boolean =>
-  tile.width >= NAME_MIN_WIDTH && tile.height >= NAME_MIN_HEIGHT;
-
-const fitsStats = (tile: AgencyTile): boolean =>
-  fitsName(tile) && tile.height >= STATS_MIN_HEIGHT;
+import { fitsName, fitsStats } from "@/live-map/tileLabel";
+import { layoutAgencies } from "@/live-map/treemapLayout";
 
 /** Kept in sync with `.treemap-tooltip`'s width so the clamp below can be exact. */
 const TOOLTIP_WIDTH = 184;
@@ -32,7 +16,10 @@ type Props = {
 
 export function AgencyTreemap({ agencies, onSelectAgency }: Props) {
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
-  const [hovered, setHovered] = useState<AgencyTile | null>(null);
+  // The id, not the tile: tiles are rebuilt on every poll and every resize, so
+  // holding one would leave the card drawn at a stale position with stale
+  // numbers until the pointer moved again.
+  const [hoveredAgencyId, setHoveredAgencyId] = useState<string | null>(null);
 
   // A callback ref that owns its observer and tears it down with the element
   // (React 19), rather than a mount effect that has to re-find the node.
@@ -59,6 +46,9 @@ export function AgencyTreemap({ agencies, onSelectAgency }: Props) {
     [agencies, size.width, size.height]
   );
 
+  const hovered =
+    tiles.find((tile) => tile.agency.id === hoveredAgencyId) ?? null;
+
   return (
     <div className="treemap" ref={measureRef}>
       {tiles.map((tile) => (
@@ -78,16 +68,16 @@ export function AgencyTreemap({ agencies, onSelectAgency }: Props) {
             onSelectAgency(tile.agency.id);
           }}
           onPointerEnter={() => {
-            setHovered(tile);
+            setHoveredAgencyId(tile.agency.id);
           }}
           onPointerLeave={() => {
-            setHovered(null);
+            setHoveredAgencyId(null);
           }}
           onFocus={() => {
-            setHovered(tile);
+            setHoveredAgencyId(tile.agency.id);
           }}
           onBlur={() => {
-            setHovered(null);
+            setHoveredAgencyId(null);
           }}
         >
           {fitsName(tile) ? (
