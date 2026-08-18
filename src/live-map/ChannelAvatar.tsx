@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { photoUrlForSize } from "@/live-map/channelPhoto";
 
 type Props = {
   readonly photoUrl: string | null;
@@ -24,7 +25,9 @@ export function ChannelAvatar({ photoUrl, size }: Props) {
   return (
     <img
       className="stream-avatar"
-      src={photoUrl}
+      // Twice the CSS size, so the icon stays sharp on a 2x display and costs
+      // a fraction of what the upstream default would.
+      src={photoUrlForSize(photoUrl, size * 2)}
       alt=""
       width={size}
       height={size}
