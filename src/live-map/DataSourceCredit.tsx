@@ -1,8 +1,6 @@
 /**
- * Required, not decorative: the Holodex API terms oblige anyone giving public
- * access to Holodex material to identify Holodex, or link to it wherever
- * possible. It therefore renders on every view, including the error and empty
- * states — those still reached the API.
+ * The Holodex API terms oblige anyone giving public access to their material to
+ * identify Holodex, and to publish a privacy policy covering its use.
  */
 export function DataSourceCredit() {
   return (
@@ -14,8 +12,6 @@ export function DataSourceCredit() {
       <span className="credit-note">
         （本サイトは Holodex とは無関係の非公式なものです）
       </span>
-      {/* Required alongside the attribution: the Holodex terms oblige a privacy
-          policy reflecting the use of content taken through their API. */}
       <a href="/privacy.html">プライバシーポリシー</a>
     </footer>
   );

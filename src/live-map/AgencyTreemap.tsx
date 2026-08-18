@@ -4,7 +4,6 @@ import { formatCount } from "@/live-map/format";
 import { fitsName, fitsStats } from "@/live-map/tileLabel";
 import { layoutAgencies } from "@/live-map/treemapLayout";
 
-/** Kept in sync with `.treemap-tooltip`'s width so the clamp below can be exact. */
 const TOOLTIP_WIDTH = 184;
 
 type Size = { readonly width: number; readonly height: number };
@@ -16,13 +15,8 @@ type Props = {
 
 export function AgencyTreemap({ agencies, onSelectAgency }: Props) {
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
-  // The id, not the tile: tiles are rebuilt on every poll and every resize, so
-  // holding one would leave the card drawn at a stale position with stale
-  // numbers until the pointer moved again.
   const [hoveredAgencyId, setHoveredAgencyId] = useState<string | null>(null);
 
-  // A callback ref that owns its observer and tears it down with the element
-  // (React 19), rather than a mount effect that has to re-find the node.
   const measureRef = useCallback(
     (node: HTMLDivElement | null): (() => void) => {
       const observer = new ResizeObserver((entries) => {
@@ -96,8 +90,7 @@ export function AgencyTreemap({ agencies, onSelectAgency }: Props) {
         <div
           className="treemap-tooltip"
           style={{
-            // Anchored to the hovered tile and clamped to the container, so a
-            // tile on the right edge does not push the card out of view.
+            width: `${String(TOOLTIP_WIDTH)}px`,
             left: `${String(Math.min(hovered.x, Math.max(size.width - TOOLTIP_WIDTH, 0)))}px`,
             top: `${String(hovered.y)}px`,
           }}

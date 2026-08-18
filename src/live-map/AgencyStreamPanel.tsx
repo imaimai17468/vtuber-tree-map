@@ -1,10 +1,6 @@
-import { agencyStreamsResponseSchema, type AgencyStreamsResponse } from "@/api";
+import { agencyStreamsResponseSchema } from "@/api";
 import { AgencyStreamGrid } from "@/live-map/AgencyStreamGrid";
 import { usePolledJson } from "@/live-map/usePolledJson";
-
-/** Module scope so the identity is stable across renders — it is an effect dependency. */
-const parseStreams = (payload: unknown): AgencyStreamsResponse =>
-  agencyStreamsResponseSchema.parse(payload);
 
 type Props = {
   readonly agencyId: string;
@@ -20,7 +16,7 @@ export function AgencyStreamPanel({ agencyId, refreshMs, onBack }: Props) {
   const streams = usePolledJson(
     `/api/agencies/${encodeURIComponent(agencyId)}/streams`,
     refreshMs,
-    parseStreams
+    agencyStreamsResponseSchema
   );
 
   if (streams.status === "loading") {

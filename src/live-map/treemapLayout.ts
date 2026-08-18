@@ -4,7 +4,7 @@ import { INDEPENDENT_AGENCY_ID, type AgencySummary } from "@/api";
 /** Matches the number of steps in the sequential ramp declared in index.css. */
 export const VIEWER_STEP_COUNT = 5;
 
-/** The 2px surface gap the data-viz mark spec asks for between adjacent fills. */
+/** The surface gap the data-viz mark spec asks for between adjacent fills. */
 const TILE_GAP = 2;
 
 export type AgencyTile = {
@@ -18,14 +18,8 @@ export type AgencyTile = {
 };
 
 /**
- * Bins a viewer total onto the sequential ramp.
- *
- * Logarithmic because the distribution is extreme — the largest agency out-draws
- * the smallest by orders of magnitude, and a linear bin would collapse every
- * agency but one into a single step. Normalised against the observed *range*
- * rather than against the maximum alone: dividing by the maximum leaves the
- * ratios bunched near 1 (every agency within an order of magnitude of the leader
- * lands on the darkest step or the one below), which wastes most of the ramp.
+ * Bins a viewer total onto the sequential ramp. Logarithmic because the largest
+ * agency out-draws the smallest by orders of magnitude.
  */
 export const viewerStepFor = (
   totalViewers: number,
@@ -41,9 +35,6 @@ export const viewerStepFor = (
   const step = Math.ceil(ratio * VIEWER_STEP_COUNT);
   return Math.min(Math.max(step, 1), VIEWER_STEP_COUNT);
 };
-
-/** The 2px surface gap the data-viz mark spec asks for, applied between the two regions too. */
-const REGION_GAP = TILE_GAP;
 
 type TreeDatum = {
   readonly agency: AgencySummary | null;
@@ -113,22 +104,10 @@ const squarifyInto = (
 };
 
 /**
- * Area is live count, per the spec, and independents are held out as the
- * catch-all on the right.
- *
- * The two regions are laid out separately rather than by ordering one squarify
- * pass. Squarify places tiles in the order it is handed and sizes each against
- * the space still unclaimed, so a value as large as independents arriving last
- * leaves the one-streamer agencies before it packed into the full height of a
- * region they occupy almost none of — VRAID and YUMENOS came out as slivers a
- * few pixels wide. Giving independents its own column first leaves the rest a
- * clean descending sequence, which is the case squarify is good at.
- *
- * The split is by area, so the encoding is unchanged: the column takes exactly
- * its share of live streamers, and the agencies divide exactly the rest.
- *
- * Pure — same agencies and same box always give the same tiles — so the component
- * can hold it in `useMemo` and tests can assert on it without rendering.
+ * Area is live count; independents take their share of it as a column on the
+ * right, and the agencies squarify into what is left. Squarify sizes each tile
+ * against the space still unclaimed, so one pass over the whole set flattens the
+ * tiles that precede independents.
  */
 export const layoutAgencies = (
   agencies: readonly AgencySummary[],
@@ -158,7 +137,7 @@ export const layoutAgencies = (
   }
 
   const total = totalLiveCount(agencies);
-  const usable = width - REGION_GAP;
+  const usable = width - TILE_GAP;
   const independentsWidth = Math.round(
     (usable * independents.liveCount) / Math.max(total, 1)
   );
@@ -168,7 +147,7 @@ export const layoutAgencies = (
     ...squarifyInto(rest, { x: 0, y: 0, width: restWidth, height }, viewers),
     {
       agency: independents,
-      x: restWidth + REGION_GAP,
+      x: restWidth + TILE_GAP,
       y: 0,
       width: independentsWidth,
       height,

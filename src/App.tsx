@@ -1,29 +1,20 @@
 import { useState, type ReactNode } from "react";
 import "@/live-map/liveMap.css";
-import { agenciesResponseSchema, type AgenciesResponse } from "@/api";
+import { agenciesResponseSchema } from "@/api";
 import { AgencyMapView } from "@/live-map/AgencyMapView";
 import { AgencyStreamPanel } from "@/live-map/AgencyStreamPanel";
 import { DataSourceCredit } from "@/live-map/DataSourceCredit";
 import { usePolledJson } from "@/live-map/usePolledJson";
 
-/**
- * Matches the Worker's cron period in `wrangler.toml`; polling faster only
- * returns the same snapshot, and each poll costs a KV read even when it answers
- * 304.
- */
+/** The Worker's cron period in `wrangler.toml`. Polling faster refetches the same snapshot. */
 const REFRESH_MS = 120_000;
 
-/** Module scope so the identity is stable across renders — it is an effect dependency. */
-const parseAgencies = (payload: unknown): AgenciesResponse =>
-  agenciesResponseSchema.parse(payload);
-
-/**
- * Holds the fetch and the one piece of navigation state, and picks the view.
- * Every branch below is a component that takes what it renders as props, so the
- * views are testable without a network.
- */
 export function App() {
-  const agencies = usePolledJson("/api/agencies", REFRESH_MS, parseAgencies);
+  const agencies = usePolledJson(
+    "/api/agencies",
+    REFRESH_MS,
+    agenciesResponseSchema
+  );
   const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
 
   if (agencies.status === "loading") {
@@ -39,16 +30,13 @@ export function App() {
 
   const { updatedAt, agencies: list } = agencies.data;
 
-  // Reachable in the small hours: unwatched streams are filtered out before the
-  // snapshot is built, so an empty list means nobody with an audience is on air.
+  // Reachable in the small hours: unwatched streams never reach the snapshot.
   if (list.length === 0) {
     return <StatusPage>いま配信している人はいません。</StatusPage>;
   }
 
-  // Derived, not synchronised: an agency leaves the list as soon as its last
-  // watched stream ends, which happens between polls while its view is open.
-  // Its detail view would have nothing left to show, so the map — the current
-  // truth — is what to fall back to.
+  // An agency leaves the list when its last watched stream ends, which happens
+  // between polls while its own view is open.
   const isSelectionLive = list.some((agency) => agency.id === selectedAgencyId);
 
   if (selectedAgencyId !== null && isSelectionLive) {
@@ -77,11 +65,7 @@ export function App() {
   );
 }
 
-/**
- * The frame every view shares. The attribution is part of it rather than of each
- * view, because the Holodex terms require it wherever their material is exposed
- * and a view added later would otherwise ship without it.
- */
+/** The frame every view shares, attribution included. */
 function Page({ children }: { readonly children: ReactNode }) {
   return (
     <main className="page">

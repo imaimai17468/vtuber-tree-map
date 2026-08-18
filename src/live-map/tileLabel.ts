@@ -1,21 +1,20 @@
 import type { AgencyTile } from "@/live-map/treemapLayout";
 
-/**
- * Below these a label would be clipped rather than shortened, so the tile shows
- * nothing and the hover card carries the values instead. Tied to the font size
- * and padding in `liveMap.css` — move them together.
- */
+// Taken from `.treemap-tile` and its label rules in liveMap.css.
+const TILE_PADDING = 8;
+const TILE_GAP = 2;
+const NAME_LINE = 16; // 13px at line-height 1.2, rounded up
+const STATS_LINE = 15; // 11px at line-height 1.3, rounded up
+const STATS_LINES = 2; // the stats wrap onto a second line on a narrow tile
+
+const NAME_MIN_HEIGHT = TILE_PADDING * 2 + NAME_LINE;
+const STATS_MIN_HEIGHT = NAME_MIN_HEIGHT + TILE_GAP + STATS_LINE * STATS_LINES;
+
+/** Narrower than this and the ellipsis leaves nothing of the name. Measured, not derived. */
 const NAME_MIN_WIDTH = 68;
-const NAME_MIN_HEIGHT = 34;
-const STATS_MIN_HEIGHT = 62;
 
 export const fitsName = (tile: AgencyTile): boolean =>
   tile.width >= NAME_MIN_WIDTH && tile.height >= NAME_MIN_HEIGHT;
 
-/**
- * The stats never appear without the name above them. On a tall narrow sliver the
- * name drops out on width while the stats still clear the height, and a count
- * with nobody's name attached says nothing — that shipped once.
- */
 export const fitsStats = (tile: AgencyTile): boolean =>
   fitsName(tile) && tile.height >= STATS_MIN_HEIGHT;

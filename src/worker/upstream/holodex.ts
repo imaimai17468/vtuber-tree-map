@@ -106,15 +106,10 @@ export const normalizeOrg = (org: string | null | undefined): string | null => {
 };
 
 /**
- * One request returns every live stream — measured on 2026-08-18, `limit=9999`
- * and the default returned the same 92 rows and `offset=100` returned none, so
- * there is nothing to paginate.
- *
- * The org carried on each embedded channel is taken as authoritative. Cross-checking
- * it against a full `/channels` walk on the same day agreed on all 40 affiliated
- * streams with no disagreement, and none of the 52 streams without an org appeared
- * in that list at all — so the walk cost 38 requests to confirm what this response
- * already said.
+ * `/live` returns every live stream in one response — `limit=9999` and the
+ * default gave the same rows, `offset=100` gave none — and the org on each
+ * embedded channel agrees with the full `/channels` list, so neither needs
+ * paginating or cross-checking.
  */
 export const createHolodexClient = (apiKey: string): UpstreamClient => ({
   fetchLiveStreams: async () => {

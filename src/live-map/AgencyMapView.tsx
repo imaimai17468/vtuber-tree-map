@@ -9,11 +9,6 @@ type Props = {
   readonly onSelectAgency: (agencyId: string) => void;
 };
 
-/**
- * Pure props -> JSX. The totals are derived here rather than passed in: they are
- * a function of `agencies` alone, so computing them anywhere else would let the
- * two disagree.
- */
 export function AgencyMapView({ agencies, updatedAt, onSelectAgency }: Props) {
   const totalLive = agencies.reduce((sum, agency) => sum + agency.liveCount, 0);
   const totalViewers = agencies.reduce(

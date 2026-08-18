@@ -6,29 +6,20 @@ export type PolledJson<T> =
   | { readonly status: "ready"; readonly data: T };
 
 /**
- * Fetches `url` and keeps it fresh on an interval.
- *
- * A refresh never drops back to `loading`: the previous payload stays on screen
- * so a poll does not blank the view. Pointing the hook at a different resource is
- * a remount — give the consumer a `key` — which is why there is no reset here.
- *
- * A background tab keeps its last payload and stops asking for a new one. That
- * check reads `document.visibilityState` at the moment it matters rather than
- * subscribing to it: nothing renders differently when the tab loses focus, so
- * holding it as state would re-render the whole view to change a value only this
- * effect ever looks at.
+ * Fetches `url` and keeps it fresh on an interval. A refresh never returns to
+ * `loading`, so a poll does not blank the view; point the hook at another
+ * resource by remounting it with a `key`.
  */
 export const usePolledJson = <T>(
   url: string,
   intervalMs: number,
-  parse: (payload: unknown) => T
+  schema: { readonly parse: (payload: unknown) => T }
 ): PolledJson<T> => {
   const [state, setState] = useState<PolledJson<T>>({ status: "loading" });
 
   useEffect(() => {
     const controller = new AbortController();
-    // Guards every write below: a response landing after teardown belongs to a
-    // url that is no longer current, and writing it would resurrect stale data.
+    // A response can land after teardown, when its url is no longer current.
     let cancelled = false;
 
     const load = async (): Promise<void> => {
@@ -44,7 +35,7 @@ export const usePolledJson = <T>(
           });
           return;
         }
-        const data = parse(await response.json());
+        const data = schema.parse(await response.json());
         if (!cancelled) {
           setState({ status: "ready", data });
         }
@@ -67,7 +58,7 @@ export const usePolledJson = <T>(
 
     loadIfVisible();
     const timer = setInterval(loadIfVisible, intervalMs);
-    // Coming back to the foreground should not wait out the rest of the period.
+    // Returning to the foreground refreshes without waiting out the period.
     document.addEventListener("visibilitychange", loadIfVisible);
 
     return () => {
@@ -76,7 +67,7 @@ export const usePolledJson = <T>(
       clearInterval(timer);
       document.removeEventListener("visibilitychange", loadIfVisible);
     };
-  }, [url, intervalMs, parse]);
+  }, [url, intervalMs, schema]);
 
   return state;
 };

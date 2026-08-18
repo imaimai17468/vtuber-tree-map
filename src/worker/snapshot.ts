@@ -13,11 +13,7 @@ export type Snapshot = {
   readonly streamsByAgency: Readonly<Record<string, readonly LiveStream[]>>;
 };
 
-/**
- * Derives a stable id from an agency name. Ids appear in URLs, so they must not
- * change when unrelated agencies come and go — deriving from the name alone
- * keeps them independent of the snapshot's contents.
- */
+/** Ids appear in URLs, so they must not shift as unrelated agencies come and go. */
 export const agencyIdFromName = (name: string): string => {
   const slug = name
     .toLowerCase()
@@ -39,12 +35,9 @@ const toLiveStream = (stream: UpstreamStream): LiveStream => ({
 });
 
 /**
- * A stream nobody is watching is not what this map is for. Upstream reports a
- * real zero rather than a missing value here — the count is absent for none of
- * them — and those rows are dominated by long-running loops and member-only
- * broadcasts that stay "live" for days. Dropping them removes agencies whose
- * only entry was such a stream, which is the intent: they are not live in any
- * sense a visitor cares about.
+ * Upstream reports a real zero here rather than a missing count, and those rows
+ * are dominated by long-running loops and member-only broadcasts that stay
+ * "live" for days.
  */
 const isWatched = (stream: UpstreamStream): boolean => stream.viewers > 0;
 
@@ -54,12 +47,7 @@ type Bucket = {
   totalViewers: number;
 };
 
-/**
- * Groups live streams into agencies and precomputes both response shapes.
- *
- * Pure: the same streams and timestamp always produce the same snapshot, so the
- * cron handler stays a thin wrapper around a function tests can drive directly.
- */
+/** Groups live streams into agencies and precomputes both response shapes. */
 export const buildSnapshot = (
   streams: readonly UpstreamStream[],
   updatedAt: string
@@ -86,16 +74,13 @@ export const buildSnapshot = (
       liveCount: bucket.streams.length,
       totalViewers: bucket.totalViewers,
     });
-    // Viewer count decides what a visitor sees first in a grid that may hold
-    // hundreds of independents.
+    // A grid of independents can hold hundreds; the busiest come first.
     streamsByAgency[id] = bucket.streams.toSorted(
       (a, b) => b.viewers - a.viewers
     );
   }
 
-  // Largest first, so a consumer that just takes the head gets the agencies that
-  // matter. Where a tile physically lands is the treemap's decision, not this
-  // ordering's — see `placementOrder` in live-map/treemapLayout.ts.
+  // Largest first. Where a tile lands is the treemap's decision, not this order's.
   return {
     updatedAt,
     agencies: agencies.toSorted(

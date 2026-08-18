@@ -4,11 +4,7 @@ import { kvSnapshotStore, type SnapshotStore } from "@/worker/snapshotStore";
 import { createHolodexClient } from "@/worker/upstream/holodex";
 import type { UpstreamClient } from "@/worker/upstream/types";
 
-/**
- * Held under the cron period, so a cached response is never as old as the next
- * snapshot, while a visitor moving between views inside a minute is served
- * without reaching this Worker at all — reads count against a KV quota too.
- */
+/** Held under the cron period, so a cached response is never older than the next snapshot. */
 const CACHE_CONTROL = "public, max-age=60, stale-while-revalidate=120";
 
 const json = (body: unknown, init: ResponseInit = {}): Response => {
@@ -17,10 +13,7 @@ const json = (body: unknown, init: ResponseInit = {}): Response => {
   return new Response(JSON.stringify(body), { ...init, headers });
 };
 
-/**
- * The snapshot is replaced wholesale once per cron run, so its timestamp
- * identifies the payload exactly — no hashing needed.
- */
+/** The snapshot is replaced wholesale each cron run, so its timestamp identifies it. */
 const etagFor = (snapshot: Snapshot): string => `W/"${snapshot.updatedAt}"`;
 
 const cached = (
@@ -37,11 +30,7 @@ const cached = (
   return json(body, { headers });
 };
 
-/**
- * Refreshes the live snapshot from upstream. Writes only on success, so a
- * failing upstream leaves the last good snapshot serving rather than blanking
- * the map.
- */
+/** Writes only on success, so a failing upstream leaves the last good snapshot serving. */
 export const refreshSnapshot = async (
   store: SnapshotStore,
   client: UpstreamClient,
@@ -105,8 +94,7 @@ export default {
   },
 
   scheduled: (_controller, env, ctx) => {
-    // Handed to waitUntil so a slow upstream cannot make the cron invocation
-    // itself time out mid-write.
+    // waitUntil, so a slow upstream cannot time the invocation out mid-write.
     ctx.waitUntil(
       refreshSnapshot(
         kvSnapshotStore(env.SNAPSHOT),
