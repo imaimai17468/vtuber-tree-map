@@ -1,9 +1,10 @@
-import type { AgencySummary, LiveStream } from "@/api";
+import {
+  INDEPENDENT_AGENCY_ID,
+  INDEPENDENT_AGENCY_NAME,
+  type AgencySummary,
+  type LiveStream,
+} from "@/api";
 import type { UpstreamStream } from "@/worker/upstream/types";
-
-/** Independents are presented as one more agency, per the product spec. */
-export const INDEPENDENT_AGENCY_ID = "independent";
-export const INDEPENDENT_AGENCY_NAME = "個人勢";
 
 export type Snapshot = {
   readonly updatedAt: string;
@@ -82,8 +83,9 @@ export const buildSnapshot = (
     );
   }
 
-  // Treemap area is live count, so ordering by it keeps the largest tiles first
-  // and makes the squarified layout deterministic for a given snapshot.
+  // Largest first, so a consumer that just takes the head gets the agencies that
+  // matter. Where a tile physically lands is the treemap's decision, not this
+  // ordering's — see `placementOrder` in live-map/treemapLayout.ts.
   return {
     updatedAt,
     agencies: agencies.toSorted(

@@ -42,5 +42,12 @@ export type LiveStream = z.infer<typeof liveStreamSchema>;
 export type AgenciesResponse = z.infer<typeof agenciesResponseSchema>;
 export type AgencyStreamsResponse = z.infer<typeof agencyStreamsResponseSchema>;
 
+/**
+ * Independents are presented as one more agency. Both sides need the id: the
+ * Worker buckets into it, and the treemap places it last.
+ */
+export const INDEPENDENT_AGENCY_ID = "independent";
+export const INDEPENDENT_AGENCY_NAME = "個人勢";
+
 export const youtubeWatchUrl = (videoId: string): string =>
   `https://www.youtube.com/watch?v=${videoId}`;

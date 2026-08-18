@@ -5,11 +5,20 @@ import { layoutAgencies, type AgencyTile } from "@/live-map/treemapLayout";
 
 /**
  * Below these a label would be clipped rather than shortened, so the tile shows
- * nothing and the hover card carries the values instead.
+ * nothing and the hover card carries the values instead. The stats never appear
+ * without the name above them: on a tall narrow sliver the name drops out on
+ * width while the stats still clear the height, and a count with nobody's name
+ * attached says nothing.
  */
 const NAME_MIN_WIDTH = 68;
 const NAME_MIN_HEIGHT = 34;
 const STATS_MIN_HEIGHT = 62;
+
+const fitsName = (tile: AgencyTile): boolean =>
+  tile.width >= NAME_MIN_WIDTH && tile.height >= NAME_MIN_HEIGHT;
+
+const fitsStats = (tile: AgencyTile): boolean =>
+  fitsName(tile) && tile.height >= STATS_MIN_HEIGHT;
 
 /** Kept in sync with `.treemap-tooltip`'s width so the clamp below can be exact. */
 const TOOLTIP_WIDTH = 184;
@@ -81,10 +90,10 @@ export function AgencyTreemap({ agencies, onSelectAgency }: Props) {
             setHovered(null);
           }}
         >
-          {tile.width >= NAME_MIN_WIDTH && tile.height >= NAME_MIN_HEIGHT ? (
+          {fitsName(tile) ? (
             <span className="treemap-tile-name">{tile.agency.name}</span>
           ) : null}
-          {tile.height >= STATS_MIN_HEIGHT ? (
+          {fitsStats(tile) ? (
             <span className="treemap-tile-stats">
               {formatCount(tile.agency.liveCount)}人配信中 ／{" "}
               {formatCount(tile.agency.totalViewers)}人視聴

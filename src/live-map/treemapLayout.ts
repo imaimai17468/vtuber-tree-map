@@ -1,5 +1,5 @@
 import { hierarchy, treemap, treemapSquarify } from "d3-hierarchy";
-import type { AgencySummary } from "@/api";
+import { INDEPENDENT_AGENCY_ID, type AgencySummary } from "@/api";
 
 /** Matches the number of steps in the sequential ramp declared in index.css. */
 export const VIEWER_STEP_COUNT = 5;
@@ -48,6 +48,25 @@ type TreeDatum = {
 };
 
 /**
+ * Squarify lays tiles out in the order it is handed, so this order is the
+ * placement: real agencies by size from the top-left, and independents last so
+ * the catch-all bucket reads as the tail rather than as the headline. Its area
+ * still encodes its live count — only where it sits changes.
+ */
+const placementOrder = (
+  agencies: readonly AgencySummary[]
+): readonly AgencySummary[] =>
+  agencies.toSorted((a, b) => {
+    if (a.id === INDEPENDENT_AGENCY_ID) {
+      return 1;
+    }
+    if (b.id === INDEPENDENT_AGENCY_ID) {
+      return -1;
+    }
+    return b.liveCount - a.liveCount || a.id.localeCompare(b.id);
+  });
+
+/**
  * Squarified treemap over the agencies: area is live count, per the spec.
  *
  * Pure — same agencies and same box always give the same tiles — so the component
@@ -67,7 +86,10 @@ export const layoutAgencies = (
   const maxViewers = Math.max(...viewerTotals);
 
   const root = hierarchy<TreeDatum>(
-    { agency: null, children: agencies.map((agency) => ({ agency })) },
+    {
+      agency: null,
+      children: placementOrder(agencies).map((agency) => ({ agency })),
+    },
     (datum) => datum.children
   ).sum((datum) => datum.agency?.liveCount ?? 0);
 

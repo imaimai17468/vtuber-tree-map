@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { AgencySummary } from "@/api";
+import { INDEPENDENT_AGENCY_ID, type AgencySummary } from "@/api";
 import {
   layoutAgencies,
   VIEWER_STEP_COUNT,
@@ -54,7 +54,38 @@ describe("layoutAgencies", () => {
       300
     );
 
-    expect(tiles.map((tile) => tile.agency.id)).toEqual(["a", "b"]);
+    expect(tiles.map((tile) => tile.agency.id).toSorted()).toEqual(["a", "b"]);
+  });
+
+  test("places the largest agency first", () => {
+    const tiles = layoutAgencies(
+      [
+        agency({ id: "small", liveCount: 1 }),
+        agency({ id: "big", liveCount: 9 }),
+      ],
+      400,
+      300
+    );
+
+    expect(tiles[0]?.agency.id).toBe("big");
+  });
+
+  test("places independents last even though it is the largest", () => {
+    const tiles = layoutAgencies(
+      [
+        agency({ id: INDEPENDENT_AGENCY_ID, liveCount: 59 }),
+        agency({ id: "hololive", liveCount: 5 }),
+        agency({ id: "nijisanji", liveCount: 6 }),
+      ],
+      400,
+      300
+    );
+
+    expect(tiles.map((tile) => tile.agency.id)).toEqual([
+      "nijisanji",
+      "hololive",
+      INDEPENDENT_AGENCY_ID,
+    ]);
   });
 
   test("gives the agency with more live streamers the larger area", () => {

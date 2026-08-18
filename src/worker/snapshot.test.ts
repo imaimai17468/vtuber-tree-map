@@ -1,11 +1,7 @@
 import { describe, expect, test } from "vitest";
+import { INDEPENDENT_AGENCY_ID, INDEPENDENT_AGENCY_NAME } from "@/api";
+import { agencyIdFromName, buildSnapshot } from "@/worker/snapshot";
 import type { UpstreamStream } from "@/worker/upstream/types";
-import {
-  agencyIdFromName,
-  buildSnapshot,
-  INDEPENDENT_AGENCY_ID,
-  INDEPENDENT_AGENCY_NAME,
-} from "@/worker/snapshot";
 
 const stream = (over: Partial<UpstreamStream> = {}): UpstreamStream => ({
   videoId: "v1",
