@@ -217,3 +217,22 @@
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
+
+/* Attribution ---------------------------------------------------------- */
+
+.credit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 20px;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.credit a {
+  color: var(--ink-secondary);
+}
+
+.credit-note {
+  color: var(--ink-muted);
+}

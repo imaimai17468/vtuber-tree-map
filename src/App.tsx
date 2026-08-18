@@ -3,6 +3,7 @@ import "@/live-map/liveMap.css";
 import { agenciesResponseSchema, type AgenciesResponse } from "@/api";
 import { AgencyStreamPanel } from "@/live-map/AgencyStreamPanel";
 import { AgencyTreemap } from "@/live-map/AgencyTreemap";
+import { DataSourceCredit } from "@/live-map/DataSourceCredit";
 import { formatCount, formatUpdatedAt } from "@/live-map/format";
 import { usePolledJson } from "@/live-map/usePolledJson";
 import { ViewerScaleLegend } from "@/live-map/ViewerScaleLegend";
@@ -50,6 +51,7 @@ export function App() {
             setSelectedAgencyId(null);
           }}
         />
+        <DataSourceCredit />
       </main>
     );
   }
@@ -71,6 +73,7 @@ export function App() {
       <ViewerScaleLegend />
 
       <AgencyTreemap agencies={list} onSelectAgency={setSelectedAgencyId} />
+      <DataSourceCredit />
     </main>
   );
 }
@@ -82,6 +85,7 @@ function Shell({ children }: { readonly children: ReactNode }) {
         <h1 className="page-title">VTuber Tree Map</h1>
       </header>
       <p className="empty">{children}</p>
+      <DataSourceCredit />
     </main>
   );
 }

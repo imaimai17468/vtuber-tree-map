@@ -1,3 +1,21 @@
+/**
+ * Holodex API client.
+ *
+ * Notices required by the Holodex API terms (https://docs.holodex.net/, "Terms
+ * of Service"), which oblige anyone giving public access to Holodex material to
+ * identify Holodex, and to carry in the source a notice referring to the public
+ * license those terms name and to its disclaimer of warranties:
+ *
+ * - The live data this project serves comes from Holodex (https://holodex.net).
+ *   The running site states that on every view — see
+ *   `live-map/DataSourceCredit.tsx`.
+ * - Use of the Holodex API and of the material it returns is governed by the
+ *   Holodex API terms and the public license they refer to, including the
+ *   disclaimer of warranties in those terms: the material is provided as-is,
+ *   with no warranty of any kind.
+ *
+ * This project is unofficial and is not affiliated with or endorsed by Holodex.
+ */
 import { z } from "zod";
 import type { UpstreamClient, UpstreamStream } from "@/worker/upstream/types";
 
