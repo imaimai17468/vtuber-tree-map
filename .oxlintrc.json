@@ -1,0 +1,94 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": [".oxlintrc.react-doctor.json"],
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react",
+    "vitest",
+    "import",
+    "jsx-a11y"
+  ],
+  "jsPlugins": [
+    { "name": "react-doctor", "specifier": "oxlint-plugin-react-doctor" }
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "rules": {
+    "complexity": "error",
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-param-reassign": "error",
+    "no-mutable-exports": "error",
+    "prefer-readonly": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "react/react-in-jsx-scope": "off",
+    "react/rules-of-hooks": "error",
+    "react/button-has-type": "error",
+    "react/checked-requires-onchange-or-readonly": "error",
+    "react/jsx-no-target-blank": "error",
+    "react/no-array-index-key": "warn",
+    "react/self-closing-comp": "error",
+    "react/jsx-boolean-value": "error",
+    "react/jsx-curly-brace-presence": "error",
+    "react/jsx-no-useless-fragment": "error",
+    "react/jsx-pascal-case": "error",
+    "react/jsx-no-constructed-context-values": "error",
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "no-console": "warn",
+    "@typescript-eslint/ban-ts-comment": "error",
+    "@typescript-eslint/no-non-null-assertion": "error",
+    "@typescript-eslint/switch-exhaustiveness-check": "error",
+    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/consistent-type-imports": "error",
+    "@typescript-eslint/consistent-type-exports": "error",
+    "@typescript-eslint/no-unsafe-assignment": "error",
+    "@typescript-eslint/no-unsafe-argument": "error",
+    "@typescript-eslint/no-unsafe-call": "error",
+    "@typescript-eslint/no-unsafe-member-access": "error",
+    "@typescript-eslint/no-unsafe-return": "error",
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": "error",
+    "@typescript-eslint/no-deprecated": "error",
+    "@typescript-eslint/no-confusing-void-expression": "error",
+    "@typescript-eslint/no-mixed-enums": "error",
+    "@typescript-eslint/only-throw-error": "error",
+    "@typescript-eslint/prefer-promise-reject-errors": "error",
+    "@typescript-eslint/prefer-nullish-coalescing": "error",
+    "@typescript-eslint/promise-function-async": "error",
+    "@typescript-eslint/require-await": "error",
+    "@typescript-eslint/restrict-plus-operands": "error",
+    "@typescript-eslint/return-await": "error",
+    "@typescript-eslint/strict-boolean-expressions": "error",
+    "@typescript-eslint/strict-void-return": "error",
+    "unicorn/throw-new-error": "error",
+    "import/no-cycle": "error",
+    "import/no-unassigned-import": "off",
+    "vitest/no-conditional-in-test": "error"
+  },
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "node": true
+  },
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "*.config.js",
+    "*.config.ts",
+    "*.config.mts"
+  ],
+  "overrides": [
+    {
+      "files": ["**/*.d.ts"],
+      "rules": {
+        "unicorn/require-module-specifiers": "off"
+      }
+    }
+  ]
+}
