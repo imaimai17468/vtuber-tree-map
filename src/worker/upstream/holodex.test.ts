@@ -37,6 +37,18 @@ describe("normalizeOrg", () => {
     expect(normalizeOrg("Independents")).toBeNull();
   });
 
+  test("treats the twitch independents label as no agency", () => {
+    expect(normalizeOrg("Twitch Independents")).toBeNull();
+  });
+
+  test("keeps an agency whose name merely contains the word", () => {
+    expect(normalizeOrg("Independent Sounds")).toBe("Independent Sounds");
+  });
+
+  test("treats a platform-scoped independents label as no agency", () => {
+    expect(normalizeOrg("Bilibili Independents")).toBeNull();
+  });
+
   test("treats a blank string as no agency", () => {
     expect(normalizeOrg("   ")).toBeNull();
   });

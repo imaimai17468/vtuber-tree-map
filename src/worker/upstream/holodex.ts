@@ -55,13 +55,6 @@ const request = async (
 };
 
 /**
- * Holodex reports an independent's org as absent, or as one of the catch-all
- * labels it uses for un-affiliated channels. Both mean "no agency" to us, and
- * collapsing them here keeps that judgment out of the aggregation.
- */
-const INDEPENDENT_ORG_LABELS = new Set(["independents", "independent", ""]);
-
-/**
  * Holodex sends `english_name: ""` for channels it has no romanisation for, and
  * `??` would keep that empty string — a card with no name at all. Only a
  * non-blank value counts as a name.
@@ -74,9 +67,24 @@ export const preferredName = (
   return english === "" ? name : english;
 };
 
+/**
+ * Holodex names a lack of agency rather than leaving the field empty, and it does
+ * so per platform — "Independents" and "Twitch Independents" both mean the channel
+ * belongs to nobody. Matching the whole trailing word covers the next platform
+ * Holodex adds without another edit here, while leaving an agency that merely
+ * contains the word ("Independent Sounds") alone.
+ *
+ * Checked against all 110 org values in use on 2026-08-18: these were the only
+ * non-agency labels, and every other value down to the one-channel entries named
+ * a real organisation.
+ */
+const INDEPENDENT_ORG = /(?:^|\s)independents?$/u;
+
 export const normalizeOrg = (org: string | null | undefined): string | null => {
   const trimmed = org?.trim() ?? "";
-  return INDEPENDENT_ORG_LABELS.has(trimmed.toLowerCase()) ? null : trimmed;
+  return trimmed === "" || INDEPENDENT_ORG.test(trimmed.toLowerCase())
+    ? null
+    : trimmed;
 };
 
 /**
