@@ -26,6 +26,13 @@ export function App() {
   }
 
   const { updatedAt, agencies: list } = agencies.data;
+
+  // Reachable in the small hours: unwatched streams are filtered out upstream of
+  // this, so an empty list means nobody with an audience is on air.
+  if (list.length === 0) {
+    return <Shell>いま配信している人はいません。</Shell>;
+  }
+
   const totalLive = list.reduce((sum, agency) => sum + agency.liveCount, 0);
   const totalViewers = list.reduce(
     (sum, agency) => sum + agency.totalViewers,
@@ -58,7 +65,8 @@ export function App() {
       </header>
 
       <p className="page-hint">
-        面積は配信中のライバー数、色の濃さは事務所の合計視聴者数です。
+        面積は配信中のライバー数、色の濃さは事務所の合計視聴者数です。視聴者が 0
+        人の配信は除いています。
       </p>
       <ViewerScaleLegend />
 

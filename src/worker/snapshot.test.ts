@@ -106,6 +106,44 @@ describe("buildSnapshot", () => {
     );
   });
 
+  test("drops a stream nobody is watching", () => {
+    const snapshot = buildSnapshot(
+      [
+        stream({ videoId: "watched", viewers: 5 }),
+        stream({ videoId: "empty", viewers: 0 }),
+      ],
+      "t"
+    );
+
+    expect(snapshot.streamsByAgency["hololive"]?.map((s) => s.videoId)).toEqual(
+      ["watched"]
+    );
+  });
+
+  test("does not count an unwatched stream toward the live count", () => {
+    const snapshot = buildSnapshot(
+      [
+        stream({ videoId: "watched", viewers: 5 }),
+        stream({ videoId: "empty", viewers: 0 }),
+      ],
+      "t"
+    );
+
+    expect(snapshot.agencies[0]?.liveCount).toBe(1);
+  });
+
+  test("drops an agency whose only stream is unwatched", () => {
+    const snapshot = buildSnapshot(
+      [
+        stream({ videoId: "watched", org: "Hololive", viewers: 5 }),
+        stream({ videoId: "empty", org: "Limnos", viewers: 0 }),
+      ],
+      "t"
+    );
+
+    expect(snapshot.agencies.map((agency) => agency.id)).toEqual(["hololive"]);
+  });
+
   test("produces an empty snapshot when nothing is live", () => {
     const snapshot = buildSnapshot([], "t");
 

@@ -38,6 +38,16 @@ const toLiveStream = (stream: UpstreamStream): LiveStream => ({
   startedAt: stream.startedAt,
 });
 
+/**
+ * A stream nobody is watching is not what this map is for. Upstream reports a
+ * real zero rather than a missing value here — the count is absent for none of
+ * them — and those rows are dominated by long-running loops and member-only
+ * broadcasts that stay "live" for days. Dropping them removes agencies whose
+ * only entry was such a stream, which is the intent: they are not live in any
+ * sense a visitor cares about.
+ */
+const isWatched = (stream: UpstreamStream): boolean => stream.viewers > 0;
+
 type Bucket = {
   name: string;
   streams: LiveStream[];
@@ -56,7 +66,7 @@ export const buildSnapshot = (
 ): Snapshot => {
   const buckets = new Map<string, Bucket>();
 
-  for (const stream of streams) {
+  for (const stream of streams.filter(isWatched)) {
     const name = stream.org ?? INDEPENDENT_AGENCY_NAME;
     const id =
       stream.org === null ? INDEPENDENT_AGENCY_ID : agencyIdFromName(name);
