@@ -8,8 +8,12 @@ import { formatCount, formatUpdatedAt } from "@/live-map/format";
 import { usePolledJson } from "@/live-map/usePolledJson";
 import { ViewerScaleLegend } from "@/live-map/ViewerScaleLegend";
 
-/** Matches the Worker's cron period; polling faster only returns the same snapshot. */
-const REFRESH_MS = 60_000;
+/**
+ * Matches the Worker's cron period in `wrangler.toml`; polling faster only
+ * returns the same snapshot, and each poll costs a KV read even when it answers
+ * 304.
+ */
+const REFRESH_MS = 120_000;
 
 /** Module scope so the identity is stable across renders — it is an effect dependency. */
 const parseAgencies = (payload: unknown): AgenciesResponse =>

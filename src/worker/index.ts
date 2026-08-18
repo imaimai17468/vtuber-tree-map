@@ -5,10 +5,11 @@ import { createHolodexClient } from "@/worker/upstream/holodex";
 import type { UpstreamClient } from "@/worker/upstream/types";
 
 /**
- * Long enough that most polls are answered by an edge or a 304, short enough
- * that a visitor never sees a snapshot two cron runs old.
+ * Held under the cron period, so a cached response is never as old as the next
+ * snapshot, while a visitor moving between views inside a minute is served
+ * without reaching this Worker at all — reads count against a KV quota too.
  */
-const CACHE_CONTROL = "public, max-age=30, stale-while-revalidate=60";
+const CACHE_CONTROL = "public, max-age=60, stale-while-revalidate=120";
 
 const json = (body: unknown, init: ResponseInit = {}): Response => {
   const headers = new Headers(init.headers);

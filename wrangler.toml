@@ -19,11 +19,15 @@ not_found_handling = "single-page-application"
 binding = "SNAPSHOT"
 id = "a8ebc4e2fc654659a80e62c5ee1a693f"
 
-# Every minute. The live snapshot is the only thing the cron writes, and KV
-# needs roughly a minute to replicate globally, so a shorter period would only
-# add upstream load without making any edge fresher.
+# Every two minutes = 720 writes/day. Workers KV allows 1,000 writes/day on the
+# free plan, so every minute (1,440) would exhaust the quota part-way through the
+# day and stop refreshing. KV also needs roughly a minute to replicate globally,
+# so the freshness given up is smaller than the period suggests.
+#
+# On a paid plan KV writes are unlimited and this can go back to "* * * * *" —
+# `REFRESH_MS` in src/App.tsx is the client-side counterpart and moves with it.
 [triggers]
-crons = ["* * * * *"]
+crons = ["*/2 * * * *"]
 
 # Declared so `wrangler types` emits it on CloudflareEnv deterministically.
 # The value is never here — register it with `wrangler secret put HOLODEX_API_KEY`.
