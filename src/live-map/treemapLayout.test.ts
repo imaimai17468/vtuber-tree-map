@@ -6,6 +6,9 @@ import {
   viewerStepFor,
 } from "@/live-map/treemapLayout";
 
+const area = (subset: readonly { width: number; height: number }[]): number =>
+  subset.reduce((sum, tile) => sum + tile.width * tile.height, 0);
+
 const agency = (over: Partial<AgencySummary> = {}): AgencySummary => ({
   id: "hololive",
   name: "Hololive",
@@ -117,6 +120,89 @@ describe("layoutAgencies", () => {
     ];
 
     expect(overflowing).toEqual([]);
+  });
+
+  test("gives independents the full-height column at the right edge", () => {
+    const tiles = layoutAgencies(
+      [
+        agency({ id: INDEPENDENT_AGENCY_ID, liveCount: 59 }),
+        agency({ id: "hololive", liveCount: 5 }),
+      ],
+      400,
+      300
+    );
+    const independents = tiles.filter(
+      (tile) => tile.agency.id === INDEPENDENT_AGENCY_ID
+    );
+
+    expect(
+      independents.map((tile) => ({
+        rightEdge: tile.x + tile.width,
+        top: tile.y,
+        height: tile.height,
+      }))
+    ).toEqual([{ rightEdge: 400, top: 0, height: 300 }]);
+  });
+
+  test("sizes the independents column to its share of live streamers", () => {
+    const tiles = layoutAgencies(
+      [
+        agency({ id: INDEPENDENT_AGENCY_ID, liveCount: 60 }),
+        agency({ id: "hololive", liveCount: 20 }),
+        agency({ id: "nijisanji", liveCount: 20 }),
+      ],
+      400,
+      300
+    );
+    const independentsArea = area(
+      tiles.filter((tile) => tile.agency.id === INDEPENDENT_AGENCY_ID)
+    );
+
+    expect(independentsArea / area(tiles)).toBeCloseTo(0.6, 1);
+  });
+
+  test("uses the whole box when nobody is independent", () => {
+    const tiles = layoutAgencies(
+      [agency({ id: "a", liveCount: 3 }), agency({ id: "b", liveCount: 7 })],
+      400,
+      300
+    );
+    const rightEdge = Math.max(...tiles.map((tile) => tile.x + tile.width));
+
+    expect(rightEdge).toBe(400);
+  });
+
+  test("keeps one-streamer agencies from collapsing into slivers", () => {
+    // The live distribution measured on 2026-08-18: one dominant catch-all and a
+    // long tail of agencies with a single streamer, which is what produced the
+    // slivers.
+    const counts = [10, 5, 4, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+    const tiles = layoutAgencies(
+      [
+        agency({
+          id: INDEPENDENT_AGENCY_ID,
+          liveCount: 63,
+          totalViewers: 6_300,
+        }),
+        ...counts.map((liveCount, index) =>
+          agency({
+            id: `a${String(index)}`,
+            liveCount,
+            totalViewers: liveCount * 100,
+          })
+        ),
+      ],
+      1400,
+      720
+    );
+    const worstAspect = Math.max(
+      ...tiles.map(
+        (tile) =>
+          Math.max(tile.width, tile.height) / Math.min(tile.width, tile.height)
+      )
+    );
+
+    expect(worstAspect).toBeLessThan(6);
   });
 
   test("returns nothing when there are no agencies", () => {

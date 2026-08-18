@@ -42,32 +42,90 @@ export const viewerStepFor = (
   return Math.min(Math.max(step, 1), VIEWER_STEP_COUNT);
 };
 
+/** The 2px surface gap the data-viz mark spec asks for, applied between the two regions too. */
+const REGION_GAP = TILE_GAP;
+
 type TreeDatum = {
   readonly agency: AgencySummary | null;
   readonly children?: readonly TreeDatum[];
 };
 
-/**
- * Squarify lays tiles out in the order it is handed, so this order is the
- * placement: real agencies by size from the top-left, and independents last so
- * the catch-all bucket reads as the tail rather than as the headline. Its area
- * still encodes its live count — only where it sits changes.
- */
-const placementOrder = (
-  agencies: readonly AgencySummary[]
-): readonly AgencySummary[] =>
-  agencies.toSorted((a, b) => {
-    if (a.id === INDEPENDENT_AGENCY_ID) {
-      return 1;
+type Box = {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+};
+
+type ViewerRange = {
+  readonly min: number;
+  readonly max: number;
+};
+
+const totalLiveCount = (agencies: readonly AgencySummary[]): number =>
+  agencies.reduce((sum, agency) => sum + agency.liveCount, 0);
+
+/** Squarified treemap of `agencies` into `box`, largest first. */
+const squarifyInto = (
+  agencies: readonly AgencySummary[],
+  box: Box,
+  viewers: ViewerRange
+): readonly AgencyTile[] => {
+  if (agencies.length === 0 || box.width <= 0 || box.height <= 0) {
+    return [];
+  }
+
+  const bySize = agencies.toSorted(
+    (a, b) => b.liveCount - a.liveCount || a.id.localeCompare(b.id)
+  );
+
+  const root = hierarchy<TreeDatum>(
+    { agency: null, children: bySize.map((agency) => ({ agency })) },
+    (datum) => datum.children
+  ).sum((datum) => datum.agency?.liveCount ?? 0);
+
+  const laidOut = treemap<TreeDatum>()
+    .tile(treemapSquarify)
+    .size([box.width, box.height])
+    .paddingInner(TILE_GAP)
+    .round(true)(root);
+
+  return (laidOut.children ?? []).flatMap((node) => {
+    const agency = node.data.agency;
+    if (agency === null) {
+      return [];
     }
-    if (b.id === INDEPENDENT_AGENCY_ID) {
-      return -1;
-    }
-    return b.liveCount - a.liveCount || a.id.localeCompare(b.id);
+    return [
+      {
+        agency,
+        x: box.x + node.x0,
+        y: box.y + node.y0,
+        width: node.x1 - node.x0,
+        height: node.y1 - node.y0,
+        viewerStep: viewerStepFor(
+          agency.totalViewers,
+          viewers.min,
+          viewers.max
+        ),
+      },
+    ];
   });
+};
 
 /**
- * Squarified treemap over the agencies: area is live count, per the spec.
+ * Area is live count, per the spec, and independents are held out as the
+ * catch-all on the right.
+ *
+ * The two regions are laid out separately rather than by ordering one squarify
+ * pass. Squarify places tiles in the order it is handed and sizes each against
+ * the space still unclaimed, so a value as large as independents arriving last
+ * leaves the one-streamer agencies before it packed into the full height of a
+ * region they occupy almost none of — VRAID and YUMENOS came out as slivers a
+ * few pixels wide. Giving independents its own column first leaves the rest a
+ * clean descending sequence, which is the case squarify is good at.
+ *
+ * The split is by area, so the encoding is unchanged: the column takes exactly
+ * its share of live streamers, and the agencies divide exactly the rest.
  *
  * Pure — same agencies and same box always give the same tiles — so the component
  * can hold it in `useMemo` and tests can assert on it without rendering.
@@ -82,37 +140,43 @@ export const layoutAgencies = (
   }
 
   const viewerTotals = agencies.map((agency) => agency.totalViewers);
-  const minViewers = Math.min(...viewerTotals);
-  const maxViewers = Math.max(...viewerTotals);
+  const viewers: ViewerRange = {
+    min: Math.min(...viewerTotals),
+    max: Math.max(...viewerTotals),
+  };
 
-  const root = hierarchy<TreeDatum>(
+  const independents = agencies.find(
+    (agency) => agency.id === INDEPENDENT_AGENCY_ID
+  );
+  const rest = agencies.filter((agency) => agency.id !== INDEPENDENT_AGENCY_ID);
+
+  if (independents === undefined) {
+    return squarifyInto(agencies, { x: 0, y: 0, width, height }, viewers);
+  }
+  if (rest.length === 0) {
+    return squarifyInto(agencies, { x: 0, y: 0, width, height }, viewers);
+  }
+
+  const total = totalLiveCount(agencies);
+  const usable = width - REGION_GAP;
+  const independentsWidth = Math.round(
+    (usable * independents.liveCount) / Math.max(total, 1)
+  );
+  const restWidth = usable - independentsWidth;
+
+  return [
+    ...squarifyInto(rest, { x: 0, y: 0, width: restWidth, height }, viewers),
     {
-      agency: null,
-      children: placementOrder(agencies).map((agency) => ({ agency })),
+      agency: independents,
+      x: restWidth + REGION_GAP,
+      y: 0,
+      width: independentsWidth,
+      height,
+      viewerStep: viewerStepFor(
+        independents.totalViewers,
+        viewers.min,
+        viewers.max
+      ),
     },
-    (datum) => datum.children
-  ).sum((datum) => datum.agency?.liveCount ?? 0);
-
-  const laidOut = treemap<TreeDatum>()
-    .tile(treemapSquarify)
-    .size([width, height])
-    .paddingInner(TILE_GAP)
-    .round(true)(root);
-
-  return (laidOut.children ?? []).flatMap((node) => {
-    const agency = node.data.agency;
-    if (agency === null) {
-      return [];
-    }
-    return [
-      {
-        agency,
-        x: node.x0,
-        y: node.y0,
-        width: node.x1 - node.x0,
-        height: node.y1 - node.y0,
-        viewerStep: viewerStepFor(agency.totalViewers, minViewers, maxViewers),
-      },
-    ];
-  });
+  ];
 };
