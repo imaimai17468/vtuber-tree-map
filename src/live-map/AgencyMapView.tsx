@@ -27,8 +27,7 @@ export function AgencyMapView({ agencies, updatedAt, onSelectAgency }: Props) {
       </header>
 
       <p className="page-hint">
-        面積は配信中のライバー数、色の濃さは事務所の合計視聴者数です。視聴者が 0
-        人の配信は除いています。
+        面積は配信中のライバー数、濃さは合計視聴者数。視聴者 0 人の配信は除外。
       </p>
       <ViewerScaleLegend />
 

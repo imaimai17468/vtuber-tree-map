@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>プライバシーポリシー — VTuber Tree Map</title>
+    <title>プライバシーポリシー | VTuber Tree Map</title>
     <style>
       /*
         Self-contained on purpose: this page is a static asset, so it must not
@@ -11,34 +11,34 @@
       */
       :root {
         color-scheme: light;
-        --plane: #f9f9f7;
-        --surface: #fcfcfb;
-        --ink-primary: #0b0b0b;
-        --ink-secondary: #52514e;
-        --ink-muted: #898781;
-        --hairline: rgba(11, 11, 11, 0.1);
-        --link: #2a78d6;
+        --plane: #eceee9;
+        --surface: #f6f7f4;
+        --ink-primary: #111411;
+        --ink-secondary: #4b524a;
+        --ink-muted: #7d857b;
+        --edge: rgba(17, 20, 17, 0.07);
+        --link: #256abf;
       }
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme="light"]) {
           color-scheme: dark;
-          --plane: #0d0d0d;
-          --surface: #1a1a19;
-          --ink-primary: #ffffff;
-          --ink-secondary: #c3c2b7;
-          --ink-muted: #898781;
-          --hairline: rgba(255, 255, 255, 0.1);
+          --plane: #101310;
+          --surface: #191d19;
+          --ink-primary: #f4f6f2;
+          --ink-secondary: #bcc4b8;
+          --ink-muted: #848d80;
+          --edge: rgba(244, 246, 242, 0.09);
           --link: #6da7ec;
         }
       }
       :root[data-theme="dark"] {
         color-scheme: dark;
-        --plane: #0d0d0d;
-        --surface: #1a1a19;
-        --ink-primary: #ffffff;
-        --ink-secondary: #c3c2b7;
-        --ink-muted: #898781;
-        --hairline: rgba(255, 255, 255, 0.1);
+        --plane: #101310;
+        --surface: #191d19;
+        --ink-primary: #f4f6f2;
+        --ink-secondary: #bcc4b8;
+        --ink-muted: #848d80;
+        --edge: rgba(244, 246, 242, 0.09);
         --link: #6da7ec;
       }
       * {
@@ -95,7 +95,7 @@
         margin-bottom: 24px;
         padding: 6px 10px;
         background: var(--surface);
-        border: 1px solid var(--hairline);
+        box-shadow: inset 0 0 0 1px var(--edge);
         color: var(--ink-secondary);
         text-decoration: none;
         font-size: 13px;
@@ -103,7 +103,7 @@
       footer {
         margin-top: 40px;
         padding-top: 16px;
-        border-top: 1px solid var(--hairline);
+        border-top: 1px solid var(--edge);
         color: var(--ink-muted);
         font-size: 12px;
       }
@@ -135,9 +135,9 @@
       <h2>第三者に送信されうる情報</h2>
       <p>本サイト自身は訪問者の情報を収集しませんが、ページの表示や遷移に伴い、訪問者のブラウザが以下の第三者と直接通信します。その際、通信の性質上、IP アドレスや User-Agent などが送信先に伝わります。</p>
       <ul>
-        <li><strong>Google</strong> — チャンネルのアイコン画像を YouTubeの画像配信ドメイン（yt3.ggpht.com）から直接読み込みます。ページを開くと発生します。</li>
-        <li><strong>YouTube</strong> — 配信をクリックすると youtube.comへ遷移します。</li>
-        <li><strong>Holodex</strong> — フッタのリンクをクリックした場合に限りholodex.net へ遷移します。</li>
+        <li><strong>Google</strong>: チャンネルのアイコン画像を YouTube の画像配信ドメイン（yt3.ggpht.com）から直接読み込みます。ページを開くと発生します。</li>
+        <li><strong>YouTube</strong>: 配信をクリックすると youtube.com へ遷移します。</li>
+        <li><strong>Holodex</strong>: フッタのリンクをクリックした場合に限り holodex.net へ遷移します。</li>
       </ul>
       <p>これらの送信先における取り扱いは、それぞれの事業者のプライバシーポリシーに従います。</p>
 
@@ -145,7 +145,7 @@
       <p>本サイトは Cloudflare Workers 上で動作しています。ウェブサイトの提供に伴い、Cloudflare において通常のアクセスログ（IP アドレス、リクエスト時刻など）が処理される場合があります。</p>
 
       <h2>配信データの取得について</h2>
-      <p>配信データは Holodex APIから定期的に取得し、サーバー側で集計しています。取得は一定間隔で実行され、訪問者のアクセスを契機とはしません。したがって訪問者に関する情報が Holodex に送信されることはありません。</p>
+      <p>配信データは Holodex API から定期的に取得し、サーバー側で集計しています。取得は一定間隔で実行され、訪問者のアクセスを契機とはしません。したがって訪問者に関する情報が Holodex に送信されることはありません。</p>
 
       <h2>本ポリシーの変更</h2>
       <p>内容を変更した場合は、本ページの最終更新日を改めます。</p>

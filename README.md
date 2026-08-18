@@ -107,6 +107,13 @@ Holodex API の利用条件は [Holodex API の規約](https://docs.holodex.net/
 本プロジェクトは非公式であり、Holodex、および各 VTuber・運営企業とは一切関係が
 ありません。
 
+## 書体
+
+見出しは Quilon Bold（Indian Type Foundry、Jonny Pinhorn）を自己ホストしています。
+CDN 参照にしないのは、実行時に第三者へ通信を増やさないためです。出所とライセンス
+識別子は `public/fonts/PROVENANCE.md` に記録しています。本文と日本語は system-ui で、
+Quilon はラテンのみを担当します。
+
 ## ライセンス
 
 このリポジトリのコードは [MIT License](./LICENSE) です。
