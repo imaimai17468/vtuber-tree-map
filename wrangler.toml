@@ -1,5 +1,8 @@
 name = "vtuber-tree-map"
 main = "./src/worker/index.ts"
+# Pinned so a machine logged into more than one Cloudflare account cannot deploy
+# this Worker to the wrong one.
+account_id = "71dd5ac6d6f667426e2026f8c43dcef0"
 # Pinned to the newest date the installed workerd supports (1.20260811.x), not to
 # today's date: a date beyond that ceiling makes the local runtime refuse to
 # start, so `vite dev` breaks for everyone. Raise it together with wrangler.
@@ -14,10 +17,7 @@ not_found_handling = "single-page-application"
 
 [[kv_namespaces]]
 binding = "SNAPSHOT"
-# Placeholder: replace with the id printed by
-#   bunx wrangler kv namespace create SNAPSHOT
-# Local `vite dev` simulates KV and ignores this value.
-id = "00000000000000000000000000000000"
+id = "a8ebc4e2fc654659a80e62c5ee1a693f"
 
 # Every minute. The live snapshot is the only thing the cron writes, and KV
 # needs roughly a minute to replicate globally, so a shorter period would only
