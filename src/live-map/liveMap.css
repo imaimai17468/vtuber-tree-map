@@ -37,6 +37,13 @@
   color: var(--ink-muted);
 }
 
+.page-stale {
+  margin: 6px 0 0;
+  color: var(--seq-5);
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .empty {
   padding: 32px 0;
   color: var(--ink-secondary);
@@ -121,6 +128,18 @@
   line-height: 1.3;
   font-variant-numeric: tabular-nums;
   opacity: 0.85;
+}
+
+.treemap-tooltip-tap {
+  display: none;
+  color: var(--ink-muted);
+}
+
+/* Only touch needs the two-tap instruction. */
+@media (hover: none) {
+  .treemap-tooltip-tap {
+    display: block;
+  }
 }
 
 .treemap-tooltip {
@@ -255,5 +274,17 @@
 @media (prefers-reduced-motion: reduce) {
   .treemap-tile {
     transition: none;
+  }
+}
+
+/*
+ * Narrow screens get a taller map rather than a different chart. Tile area is a
+ * fixed share of the whole, so the only way to lift the smallest agencies to a
+ * tappable size is to give the map more area; the page scrolls to it.
+ */
+@media (max-width: 700px) {
+  .treemap {
+    flex: none;
+    height: 1280px;
   }
 }

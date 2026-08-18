@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import "@/live-map/liveMap.css";
 import { agenciesResponseSchema } from "@/api";
+import { selectAgency, useSelectedAgencyId } from "@/live-map/agencyRoute";
 import { AgencyMapView } from "@/live-map/AgencyMapView";
 import { AgencyStreamPanel } from "@/live-map/AgencyStreamPanel";
 import { DataSourceCredit } from "@/live-map/DataSourceCredit";
@@ -15,7 +16,7 @@ export function App() {
     REFRESH_MS,
     agenciesResponseSchema
   );
-  const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
+  const selectedAgencyId = useSelectedAgencyId();
 
   if (agencies.status === "loading") {
     return <StatusPage>読み込み中…</StatusPage>;
@@ -47,7 +48,7 @@ export function App() {
           agencyId={selectedAgencyId}
           refreshMs={REFRESH_MS}
           onBack={() => {
-            setSelectedAgencyId(null);
+            selectAgency(null);
           }}
         />
       </Page>
@@ -59,7 +60,8 @@ export function App() {
       <AgencyMapView
         agencies={list}
         updatedAt={updatedAt}
-        onSelectAgency={setSelectedAgencyId}
+        fetchedAt={agencies.fetchedAt}
+        onSelectAgency={selectAgency}
       />
     </Page>
   );

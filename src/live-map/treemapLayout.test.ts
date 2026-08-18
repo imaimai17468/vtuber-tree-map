@@ -3,6 +3,7 @@ import { INDEPENDENT_AGENCY_ID, type AgencySummary } from "@/api";
 import {
   layoutAgencies,
   VIEWER_STEP_COUNT,
+  viewersPerLiver,
   viewerStepFor,
 } from "@/live-map/treemapLayout";
 
@@ -15,6 +16,29 @@ const agency = (over: Partial<AgencySummary> = {}): AgencySummary => ({
   liveCount: 1,
   totalViewers: 100,
   ...over,
+});
+
+describe("viewersPerLiver", () => {
+  test("divides the audience by the streamers drawing it", () => {
+    expect(
+      viewersPerLiver(agency({ liveCount: 6, totalViewers: 77_829 }))
+    ).toBeCloseTo(12_971.5, 1);
+  });
+
+  test("reads zero for an agency with nobody live", () => {
+    expect(viewersPerLiver(agency({ liveCount: 0, totalViewers: 0 }))).toBe(0);
+  });
+
+  test("separates a concentrated audience from one spread thin", () => {
+    const concentrated = viewersPerLiver(
+      agency({ liveCount: 6, totalViewers: 77_829 })
+    );
+    const spread = viewersPerLiver(
+      agency({ liveCount: 111, totalViewers: 26_311 })
+    );
+
+    expect(concentrated).toBeGreaterThan(spread);
+  });
 });
 
 describe("viewerStepFor", () => {
@@ -203,6 +227,43 @@ describe("layoutAgencies", () => {
     );
 
     expect(worstAspect).toBeLessThan(6);
+  });
+
+  test("colours by audience per streamer, not by the total", () => {
+    // Same total audience; one agency concentrates it, the other spreads it.
+    const tiles = layoutAgencies(
+      [
+        agency({ id: "few", liveCount: 2, totalViewers: 20_000 }),
+        agency({ id: "many", liveCount: 40, totalViewers: 20_000 }),
+      ],
+      600,
+      400
+    );
+    const stepOf = (id: string) =>
+      tiles
+        .filter((tile) => tile.agency.id === id)
+        .map((tile) => tile.viewerStep);
+
+    expect(stepOf("few")).not.toEqual(stepOf("many"));
+  });
+
+  test("gives the concentrated agency the darker end of the ramp", () => {
+    const tiles = layoutAgencies(
+      [
+        agency({ id: "few", liveCount: 2, totalViewers: 20_000 }),
+        agency({ id: "many", liveCount: 40, totalViewers: 20_000 }),
+      ],
+      600,
+      400
+    );
+    const steps = (id: string) =>
+      tiles
+        .filter((tile) => tile.agency.id === id)
+        .map((tile) => tile.viewerStep);
+    const [few = 0] = steps("few");
+    const [many = 0] = steps("many");
+
+    expect(few).toBeGreaterThan(many);
   });
 
   test("returns nothing when there are no agencies", () => {

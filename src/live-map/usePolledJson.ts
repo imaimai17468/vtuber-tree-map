@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 export type PolledJson<T> =
   | { readonly status: "loading" }
   | { readonly status: "error"; readonly message: string }
-  | { readonly status: "ready"; readonly data: T };
+  | {
+      readonly status: "ready";
+      readonly data: T;
+      /** When this payload arrived, so a view can age it without reading the clock. */
+      readonly fetchedAt: number;
+    };
 
 /**
  * Fetches `url` and keeps it fresh on an interval. A refresh never returns to
@@ -37,7 +42,7 @@ export const usePolledJson = <T>(
         }
         const data = schema.parse(await response.json());
         if (!cancelled) {
-          setState({ status: "ready", data });
+          setState({ status: "ready", data, fetchedAt: Date.now() });
         }
       } catch (error: unknown) {
         if (cancelled || controller.signal.aborted) {

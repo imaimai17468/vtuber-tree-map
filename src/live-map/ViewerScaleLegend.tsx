@@ -12,7 +12,7 @@ const steps = Array.from(
 export function ViewerScaleLegend() {
   return (
     <div className="legend">
-      <span className="legend-label">合計視聴者数</span>
+      <span className="legend-label">1 人あたり視聴者</span>
       <span className="legend-end">少</span>
       <span className="legend-ramp">
         {steps.map((step) => (

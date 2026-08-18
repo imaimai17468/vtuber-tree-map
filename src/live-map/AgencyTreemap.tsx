@@ -2,9 +2,17 @@ import { useCallback, useMemo, useState } from "react";
 import type { AgencySummary } from "@/api";
 import { formatCount } from "@/live-map/format";
 import { fitsName, fitsStats } from "@/live-map/tileLabel";
-import { layoutAgencies } from "@/live-map/treemapLayout";
+import { layoutAgencies, viewersPerLiver } from "@/live-map/treemapLayout";
 
 const TOOLTIP_WIDTH = 184;
+
+/**
+ * Touch has no hover, so a tile too small for its label would be an anonymous
+ * rectangle: at 390px most of them are. Read at the moment of the event rather
+ * than subscribed to, because nothing renders differently from it.
+ */
+const pointerCanHover = (): boolean =>
+  window.matchMedia("(hover: hover)").matches;
 
 type Size = { readonly width: number; readonly height: number };
 
@@ -59,13 +67,22 @@ export function AgencyTreemap({ agencies, onSelectAgency }: Props) {
             color: `var(--on-seq-${String(tile.viewerStep)})`,
           }}
           onClick={() => {
+            // Without hover, the first tap names the tile and the second opens it.
+            if (!pointerCanHover() && hoveredAgencyId !== tile.agency.id) {
+              setHoveredAgencyId(tile.agency.id);
+              return;
+            }
             onSelectAgency(tile.agency.id);
           }}
-          onPointerEnter={() => {
-            setHoveredAgencyId(tile.agency.id);
+          onPointerEnter={(event) => {
+            if (event.pointerType === "mouse") {
+              setHoveredAgencyId(tile.agency.id);
+            }
           }}
-          onPointerLeave={() => {
-            setHoveredAgencyId(null);
+          onPointerLeave={(event) => {
+            if (event.pointerType === "mouse") {
+              setHoveredAgencyId(null);
+            }
           }}
           onFocus={() => {
             setHoveredAgencyId(tile.agency.id);
@@ -79,8 +96,8 @@ export function AgencyTreemap({ agencies, onSelectAgency }: Props) {
           ) : null}
           {fitsStats(tile) ? (
             <span className="treemap-tile-stats">
-              {formatCount(tile.agency.liveCount)}人配信中 ／{" "}
-              {formatCount(tile.agency.totalViewers)}人視聴
+              {formatCount(tile.agency.liveCount)}人配信中 ／ 1人あたり{" "}
+              {formatCount(Math.round(viewersPerLiver(tile.agency)))}人
             </span>
           ) : null}
         </button>
@@ -97,7 +114,12 @@ export function AgencyTreemap({ agencies, onSelectAgency }: Props) {
         >
           <strong>{hovered.agency.name}</strong>
           <span>配信中 {formatCount(hovered.agency.liveCount)} 人</span>
-          <span>合計視聴者 {formatCount(hovered.agency.totalViewers)} 人</span>
+          <span>
+            1 人あたり{" "}
+            {formatCount(Math.round(viewersPerLiver(hovered.agency)))} 人
+          </span>
+          <span>合計 {formatCount(hovered.agency.totalViewers)} 人</span>
+          <span className="treemap-tooltip-tap">もう一度タップで開く</span>
         </div>
       )}
     </div>
