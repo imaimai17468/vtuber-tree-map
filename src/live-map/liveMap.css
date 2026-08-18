@@ -1,0 +1,219 @@
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin-bottom: 4px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.page-stats,
+.page-hint {
+  margin: 0;
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.page-hint {
+  margin: 12px 0 8px;
+  color: var(--ink-muted);
+}
+
+.empty {
+  padding: 32px 0;
+  color: var(--ink-secondary);
+  font-size: 14px;
+}
+
+/* Legend --------------------------------------------------------------- */
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.legend-ramp {
+  display: flex;
+  gap: 2px;
+}
+
+.legend-step {
+  width: 22px;
+  height: 10px;
+}
+
+.legend-end {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Treemap -------------------------------------------------------------- */
+
+.treemap {
+  position: relative;
+  width: 100%;
+  height: min(70vh, 720px);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+}
+
+.treemap-tile {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 8px;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.treemap-tile:hover,
+.treemap-tile:focus-visible {
+  outline: 2px solid var(--ink-primary);
+  outline-offset: -2px;
+}
+
+.treemap-tile-name {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.treemap-tile-stats {
+  font-size: 11px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.treemap-tooltip {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--surface);
+  color: var(--ink-primary);
+  border: 1px solid var(--hairline);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  width: 184px;
+}
+
+/* Agency detail -------------------------------------------------------- */
+
+.agency-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin-bottom: 20px;
+}
+
+.agency-back {
+  padding: 6px 10px;
+  background: var(--surface);
+  color: var(--ink-secondary);
+  border: 1px solid var(--hairline);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.agency-back:hover {
+  color: var(--ink-primary);
+}
+
+.agency-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.agency-stats {
+  margin: 0;
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stream-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stream-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  aspect-ratio: 1;
+  padding: 12px 8px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid var(--hairline);
+}
+
+.stream-card:hover,
+.stream-card:focus-visible {
+  border-color: var(--seq-3);
+}
+
+.stream-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.stream-avatar-blank {
+  background: var(--plane);
+}
+
+.stream-channel {
+  width: 100%;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.stream-viewers {
+  color: var(--ink-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,31 @@
+name = "vtuber-tree-map"
+main = "./src/worker/index.ts"
+# Pinned to the newest date the installed workerd supports (1.20260811.x), not to
+# today's date: a date beyond that ceiling makes the local runtime refuse to
+# start, so `vite dev` breaks for everyone. Raise it together with wrangler.
+compatibility_date = "2026-08-11"
+
+[assets]
+directory = "./dist/client"
+binding = "ASSETS"
+# The SPA owns every path the Worker does not claim, so an unknown path serves
+# index.html rather than a 404.
+not_found_handling = "single-page-application"
+
+[[kv_namespaces]]
+binding = "SNAPSHOT"
+# Placeholder: replace with the id printed by
+#   bunx wrangler kv namespace create SNAPSHOT
+# Local `vite dev` simulates KV and ignores this value.
+id = "00000000000000000000000000000000"
+
+# Every minute. The live snapshot is the only thing the cron writes, and KV
+# needs roughly a minute to replicate globally, so a shorter period would only
+# add upstream load without making any edge fresher.
+[triggers]
+crons = ["* * * * *"]
+
+# Declared so `wrangler types` emits it on CloudflareEnv deterministically.
+# The value is never here — register it with `wrangler secret put HOLODEX_API_KEY`.
+[secrets]
+required = ["HOLODEX_API_KEY"]

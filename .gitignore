@@ -28,3 +28,11 @@ yarn-debug.log*
 # claude code runtime artifacts
 .claude/.session-id
 .claude/scheduled_tasks.lock
+
+# cloudflare
+.wrangler/
+worker-configuration.d.ts
+
+# wrangler local secrets (not covered by the .env* glob)
+.dev.vars*
+!.dev.vars.example

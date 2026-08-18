@@ -1,6 +1,6 @@
 # Project Instructions
 
-This project is a **React 19 + Vite** single-page app. Package manager and runtime are **bun**; tool versions are pinned in `mise.toml`. Linting is **oxlint** (type-aware, with the `react-doctor` plugin) and formatting is **oxfmt** — not ESLint, not Prettier. APIs and conventions may differ from your training data.
+This project is a **React 19 + Vite** single-page app served by a **Cloudflare Worker** that also exposes its `/api` routes and refreshes the live snapshot on a cron trigger. Package manager and runtime are **bun**; tool versions are pinned in `mise.toml`. Linting is **oxlint** (type-aware, with the `react-doctor` plugin) and formatting is **oxfmt** — not ESLint, not Prettier. APIs and conventions may differ from your training data.
 
 This file carries directives. Step-by-step procedure lives in the skills it names — follow the pointer rather than assuming the summary is the whole rule.
 
@@ -74,6 +74,14 @@ The next rule is not path-scoped — it applies whenever you write any instructi
 
 White-box testing: tests cover internal logic paths and branches, not just inputs/outputs. Pure functions require 100% branch coverage — `vitest.config.mts` mechanizes this via `coverage.include` and a per-file 100% branch threshold, so a new pure module gets added to that list alongside its test.
 
+## Data Flow
+
+One rule governs the whole design: **the browser never talks to an upstream API.** A cron trigger refreshes a single snapshot in KV, and every visitor is served from that snapshot, so upstream load is a constant that does not scale with traffic. Anything that would put an upstream call on the request path — or in a component — breaks the property the architecture exists for.
+
+The endpoints are split to match the UI's own steps rather than the data's shape: the overview carries only what the treemap draws, and a single agency's streams are fetched when that agency opens. Widening either payload to save a request trades the thing that keeps the first paint small.
+
+`src/worker/upstream/types.ts` is the provider boundary. A different upstream is a new module producing the same values — never a change to the aggregation or the routes above it.
+
 ## Quality Gates
 
 Checks run in three places, and each is defined in exactly one file — open it before stating what it does:
@@ -81,6 +89,9 @@ Checks run in three places, and each is defined in exactly one file — open it 
 - `lefthook.yml` — pre-commit (oxlint / oxfmt on staged files) and pre-push (`bun run check`, `bun run typecheck`)
 - `.claude/hooks/stop-gate.sh` — Stop hook: typecheck / lint / format, blocking, skipped on docs-only turns
 - `.oxlintrc.json` — the rule set itself, extending `.oxlintrc.react-doctor.json`
+- `wrangler.toml` — assets, KV binding, cron period, and the required secret names
+
+`worker-configuration.d.ts` is generated, not committed: run `bun run cf-typegen` after a clone or any `wrangler.toml` change, or `bun run typecheck` fails on the missing `CloudflareEnv`.
 
 Pre-commit is check-only, never auto-fix: rewriting staged content at commit time makes the committed bytes differ from what was reviewed. On failure, run `bun run check:fix` and re-stage.
 

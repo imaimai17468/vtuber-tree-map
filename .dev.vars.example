@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local development. Production values are never in the
+# working tree — register them with `wrangler secret put HOLODEX_API_KEY`.
+# Issue a key from your Holodex account settings at https://holodex.net.
+HOLODEX_API_KEY=your_holodex_api_key

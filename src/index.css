@@ -1,8 +1,93 @@
+/*
+ * Chart tokens come from the data-viz reference palette. The sequential blue
+ * ramp encodes total viewers; both ramps were run through the palette
+ * validator against the surfaces declared here (all checks pass).
+ */
 :root {
-  color-scheme: light dark;
-  font-family: system-ui, sans-serif;
+  color-scheme: light;
+
+  --surface: #fcfcfb;
+  --plane: #f9f9f7;
+  --ink-primary: #0b0b0b;
+  --ink-secondary: #52514e;
+  --ink-muted: #898781;
+  --hairline: rgba(11, 11, 11, 0.1);
+
+  /* Sequential: low -> high total viewers. */
+  --seq-1: #86b6ef;
+  --seq-2: #5598e7;
+  --seq-3: #2a78d6;
+  --seq-4: #1c5cab;
+  --seq-5: #104281;
+
+  /* Ink that stays legible on each step of the ramp above. */
+  --on-seq-1: #0b0b0b;
+  --on-seq-2: #0b0b0b;
+  --on-seq-3: #ffffff;
+  --on-seq-4: #ffffff;
+  --on-seq-5: #ffffff;
+
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --surface: #1a1a19;
+    --plane: #0d0d0d;
+    --ink-primary: #ffffff;
+    --ink-secondary: #c3c2b7;
+    --ink-muted: #898781;
+    --hairline: rgba(255, 255, 255, 0.1);
+
+    --seq-1: #184f95;
+    --seq-2: #256abf;
+    --seq-3: #3987e5;
+    --seq-4: #6da7ec;
+    --seq-5: #9ec5f4;
+
+    --on-seq-1: #ffffff;
+    --on-seq-2: #ffffff;
+    --on-seq-3: #ffffff;
+    --on-seq-4: #0b0b0b;
+    --on-seq-5: #0b0b0b;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface: #1a1a19;
+  --plane: #0d0d0d;
+  --ink-primary: #ffffff;
+  --ink-secondary: #c3c2b7;
+  --ink-muted: #898781;
+  --hairline: rgba(255, 255, 255, 0.1);
+
+  --seq-1: #184f95;
+  --seq-2: #256abf;
+  --seq-3: #3987e5;
+  --seq-4: #6da7ec;
+  --seq-5: #9ec5f4;
+
+  --on-seq-1: #ffffff;
+  --on-seq-2: #ffffff;
+  --on-seq-3: #ffffff;
+  --on-seq-4: #0b0b0b;
+  --on-seq-5: #0b0b0b;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--plane);
+  color: var(--ink-primary);
 }
