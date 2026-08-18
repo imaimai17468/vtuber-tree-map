@@ -17,9 +17,4 @@ export type UpstreamStream = {
 
 export type UpstreamClient = {
   readonly fetchLiveStreams: () => Promise<readonly UpstreamStream[]>;
-  /**
-   * Channel id -> agency name. Membership changes on the order of days, so this
-   * is cached far longer than the live data and joined in locally.
-   */
-  readonly fetchChannelOrgs: () => Promise<ReadonlyMap<string, string>>;
 };

@@ -1,26 +1,31 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import type { UpstreamStream } from "@/worker/upstream/types";
 import {
   createHolodexClient,
   HolodexError,
   normalizeOrg,
-  withChannelOrgs,
+  preferredName,
 } from "@/worker/upstream/holodex";
-
-const stream = (over: Partial<UpstreamStream> = {}): UpstreamStream => ({
-  videoId: "v1",
-  title: "配信",
-  channelId: "c1",
-  channelName: "Ch",
-  channelPhoto: null,
-  org: null,
-  viewers: 0,
-  startedAt: null,
-  ...over,
-});
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe("preferredName", () => {
+  test("prefers the english name when there is one", () => {
+    expect(preferredName("Sakura Miko", "さくらみこ Ch.")).toBe("Sakura Miko");
+  });
+
+  test("falls back when the english name is the empty string", () => {
+    expect(preferredName("", "Maygi")).toBe("Maygi");
+  });
+
+  test("falls back when the english name is only whitespace", () => {
+    expect(preferredName("  ", "Maygi")).toBe("Maygi");
+  });
+
+  test("falls back when there is no english name at all", () => {
+    expect(preferredName(undefined, "Maygi")).toBe("Maygi");
+  });
 });
 
 describe("normalizeOrg", () => {
@@ -42,35 +47,6 @@ describe("normalizeOrg", () => {
 
   test("trims surrounding whitespace", () => {
     expect(normalizeOrg(" Nijisanji ")).toBe("Nijisanji");
-  });
-});
-
-describe("withChannelOrgs", () => {
-  test("fills in the agency from the channel map", () => {
-    const filled = withChannelOrgs(
-      [stream({ channelId: "c1" })],
-      new Map([["c1", "Hololive"]])
-    );
-
-    expect(filled[0]?.org).toBe("Hololive");
-  });
-
-  test("leaves an agency the upstream already reported untouched", () => {
-    const filled = withChannelOrgs(
-      [stream({ channelId: "c1", org: "VSPO" })],
-      new Map([["c1", "Hololive"]])
-    );
-
-    expect(filled[0]?.org).toBe("VSPO");
-  });
-
-  test("leaves a channel missing from the map as an independent", () => {
-    const filled = withChannelOrgs(
-      [stream({ channelId: "unknown" })],
-      new Map()
-    );
-
-    expect(filled[0]?.org).toBeNull();
   });
 });
 
@@ -114,7 +90,7 @@ describe("createHolodexClient", () => {
     ]);
   });
 
-  test("falls back to the native channel name when there is no english name", async () => {
+  test("uses the native channel name when there is no english name", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>().mockResolvedValue(
@@ -143,6 +119,26 @@ describe("createHolodexClient", () => {
     });
   });
 
+  test("uses the native channel name when the english name is empty", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>().mockResolvedValue(
+        Response.json([
+          {
+            id: "abc",
+            title: "配信",
+            status: "live",
+            channel: { id: "UC1", name: "Maygi", english_name: "" },
+          },
+        ])
+      )
+    );
+
+    const streams = await createHolodexClient("key").fetchLiveStreams();
+
+    expect(streams[0]?.channelName).toBe("Maygi");
+  });
+
   test("sends the api key as a header", async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
@@ -167,34 +163,5 @@ describe("createHolodexClient", () => {
     await expect(createHolodexClient("key").fetchLiveStreams()).rejects.toThrow(
       HolodexError
     );
-  });
-
-  test("stops paging channels once a short page arrives", async () => {
-    const fullPage = Array.from({ length: 50 }, (_, index) => ({
-      id: `UC${String(index)}`,
-      org: "Hololive",
-    }));
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(Response.json(fullPage))
-      .mockResolvedValueOnce(Response.json([{ id: "UClast", org: "VSPO" }]));
-    vi.stubGlobal("fetch", fetchMock);
-
-    const orgs = await createHolodexClient("key").fetchChannelOrgs();
-
-    expect(orgs.size).toBe(51);
-  });
-
-  test("omits independents from the channel map", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi
-        .fn<typeof fetch>()
-        .mockResolvedValue(Response.json([{ id: "UC1", org: "Independents" }]))
-    );
-
-    const orgs = await createHolodexClient("key").fetchChannelOrgs();
-
-    expect(orgs.size).toBe(0);
   });
 });

@@ -1,30 +1,14 @@
 import type { AgenciesResponse, AgencyStreamsResponse } from "@/api";
 import { buildSnapshot, type Snapshot } from "@/worker/snapshot";
-import {
-  createHolodexClient,
-  withChannelOrgs,
-} from "@/worker/upstream/holodex";
-
-const SNAPSHOT_KEY = "snapshot:v1";
-const CHANNEL_ORGS_KEY = "channel-orgs:v1";
-
-/**
- * Agency membership changes on the order of days, and walking the channel list
- * costs dozens of upstream requests, so it is refreshed far more rarely than the
- * live data it annotates.
- */
-const CHANNEL_ORGS_TTL_MS = 24 * 60 * 60 * 1000;
+import { kvSnapshotStore, type SnapshotStore } from "@/worker/snapshotStore";
+import { createHolodexClient } from "@/worker/upstream/holodex";
+import type { UpstreamClient } from "@/worker/upstream/types";
 
 /**
  * Long enough that most polls are answered by an edge or a 304, short enough
  * that a visitor never sees a snapshot two cron runs old.
  */
 const CACHE_CONTROL = "public, max-age=30, stale-while-revalidate=60";
-
-type CachedChannelOrgs = {
-  readonly fetchedAt: number;
-  readonly entries: readonly (readonly [string, string])[];
-};
 
 const json = (body: unknown, init: ResponseInit = {}): Response => {
   const headers = new Headers(init.headers);
@@ -52,50 +36,21 @@ const cached = (
   return json(body, { headers });
 };
 
-const readSnapshot = async (env: CloudflareEnv): Promise<Snapshot | null> =>
-  env.SNAPSHOT.get<Snapshot>(SNAPSHOT_KEY, "json");
-
-const readChannelOrgs = async (
-  env: CloudflareEnv
-): Promise<CachedChannelOrgs | null> =>
-  env.SNAPSHOT.get<CachedChannelOrgs>(CHANNEL_ORGS_KEY, "json");
-
 /**
  * Refreshes the live snapshot from upstream. Writes only on success, so a
  * failing upstream leaves the last good snapshot serving rather than blanking
  * the map.
  */
 export const refreshSnapshot = async (
-  env: CloudflareEnv,
+  store: SnapshotStore,
+  client: UpstreamClient,
   now: number
 ): Promise<void> => {
-  const client = createHolodexClient(env.HOLODEX_API_KEY);
-
-  const previous = await readChannelOrgs(env);
-  const isStale =
-    previous === null || now - previous.fetchedAt > CHANNEL_ORGS_TTL_MS;
-
-  let orgs: ReadonlyMap<string, string>;
-  if (isStale) {
-    orgs = await client.fetchChannelOrgs();
-    await env.SNAPSHOT.put(
-      CHANNEL_ORGS_KEY,
-      JSON.stringify({
-        fetchedAt: now,
-        entries: [...orgs],
-      } satisfies CachedChannelOrgs)
-    );
-  } else {
-    orgs = new Map(previous.entries);
-  }
-
   const streams = await client.fetchLiveStreams();
-  const snapshot = buildSnapshot(
-    withChannelOrgs(streams, orgs),
-    new Date(now).toISOString()
-  );
 
-  await env.SNAPSHOT.put(SNAPSHOT_KEY, JSON.stringify(snapshot));
+  await store.writeSnapshot(
+    buildSnapshot(streams, new Date(now).toISOString())
+  );
 };
 
 const handleApi = async (
@@ -103,7 +58,7 @@ const handleApi = async (
   env: CloudflareEnv,
   pathname: string
 ): Promise<Response> => {
-  const snapshot = await readSnapshot(env);
+  const snapshot = await kvSnapshotStore(env.SNAPSHOT).readSnapshot();
   if (snapshot === null) {
     return json(
       { error: "snapshot_unavailable" },
@@ -151,6 +106,12 @@ export default {
   scheduled: (_controller, env, ctx) => {
     // Handed to waitUntil so a slow upstream cannot make the cron invocation
     // itself time out mid-write.
-    ctx.waitUntil(refreshSnapshot(env, Date.now()));
+    ctx.waitUntil(
+      refreshSnapshot(
+        kvSnapshotStore(env.SNAPSHOT),
+        createHolodexClient(env.HOLODEX_API_KEY),
+        Date.now()
+      )
+    );
   },
 } satisfies ExportedHandler<CloudflareEnv>;

@@ -1,5 +1,6 @@
 import type { AgencySummary, LiveStream } from "@/api";
 import { youtubeWatchUrl } from "@/api";
+import { ChannelAvatar } from "@/live-map/ChannelAvatar";
 import { formatCount } from "@/live-map/format";
 
 type Props = {
@@ -39,22 +40,7 @@ export function AgencyStreamGrid({ agency, streams, onBack }: Props) {
                 rel="noreferrer"
                 title={stream.title}
               >
-                {stream.channelPhoto === null ? (
-                  <span
-                    className="stream-avatar stream-avatar-blank"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <img
-                    className="stream-avatar"
-                    src={stream.channelPhoto}
-                    alt=""
-                    width={56}
-                    height={56}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                )}
+                <ChannelAvatar photoUrl={stream.channelPhoto} size={56} />
                 <span className="stream-channel">{stream.channelName}</span>
                 <span className="stream-viewers">
                   {formatCount(stream.viewers)} 人

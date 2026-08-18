@@ -61,7 +61,7 @@ describe("AgencyStreamGrid", () => {
     expect(screen.getByRole("presentation")).toHaveAttribute("loading", "lazy");
   });
 
-  test("renders a placeholder for a channel with no icon", () => {
+  test("falls back to a placeholder for a channel with no icon", () => {
     render(
       <AgencyStreamGrid
         agency={agency}

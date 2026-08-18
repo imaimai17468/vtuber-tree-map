@@ -3,16 +3,6 @@ import type { UpstreamClient, UpstreamStream } from "@/worker/upstream/types";
 
 const HOLODEX_BASE = "https://holodex.net/api/v2";
 
-/** `/channels` caps a page at 50; anything larger is silently truncated upstream. */
-const CHANNEL_PAGE_SIZE = 50;
-
-/**
- * Stops pagination from following a misbehaving upstream forever. Holodex tracks
- * a few thousand vtuber channels, so this leaves ample headroom while keeping a
- * single cron run bounded.
- */
-const MAX_CHANNEL_PAGES = 200;
-
 const liveVideoSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -24,20 +14,11 @@ const liveVideoSchema = z.object({
     name: z.string(),
     english_name: z.string().nullish(),
     photo: z.string().nullish(),
-    // Present on the full channel resource. The minimal channel embedded in a
-    // video may omit it, which is why `fetchChannelOrgs` exists — this is the
-    // fast path, not the only one.
     org: z.string().nullish(),
   }),
 });
 
-const channelSchema = z.object({
-  id: z.string(),
-  org: z.string().nullish(),
-});
-
 const liveResponseSchema = z.array(liveVideoSchema);
-const channelsResponseSchema = z.array(channelSchema);
 
 export class HolodexError extends Error {
   constructor(
@@ -80,44 +61,35 @@ const request = async (
  */
 const INDEPENDENT_ORG_LABELS = new Set(["independents", "independent", ""]);
 
+/**
+ * Holodex sends `english_name: ""` for channels it has no romanisation for, and
+ * `??` would keep that empty string — a card with no name at all. Only a
+ * non-blank value counts as a name.
+ */
+export const preferredName = (
+  englishName: string | null | undefined,
+  name: string
+): string => {
+  const english = englishName?.trim() ?? "";
+  return english === "" ? name : english;
+};
+
 export const normalizeOrg = (org: string | null | undefined): string | null => {
   const trimmed = org?.trim() ?? "";
   return INDEPENDENT_ORG_LABELS.has(trimmed.toLowerCase()) ? null : trimmed;
 };
 
 /**
- * Walks `/channels` until a short page proves the list is exhausted. Expressed
- * as recursion rather than a loop because each request's offset is only known
- * once the previous page has come back — there is nothing to parallelize.
+ * One request returns every live stream — measured on 2026-08-18, `limit=9999`
+ * and the default returned the same 92 rows and `offset=100` returned none, so
+ * there is nothing to paginate.
+ *
+ * The org carried on each embedded channel is taken as authoritative. Cross-checking
+ * it against a full `/channels` walk on the same day agreed on all 40 affiliated
+ * streams with no disagreement, and none of the 52 streams without an org appeared
+ * in that list at all — so the walk cost 38 requests to confirm what this response
+ * already said.
  */
-const collectChannelOrgs = async (
-  apiKey: string,
-  page: number,
-  orgs: Map<string, string>
-): Promise<ReadonlyMap<string, string>> => {
-  if (page >= MAX_CHANNEL_PAGES) {
-    return orgs;
-  }
-
-  const payload = await request(apiKey, "/channels", {
-    type: "vtuber",
-    limit: String(CHANNEL_PAGE_SIZE),
-    offset: String(page * CHANNEL_PAGE_SIZE),
-  });
-  const channels = channelsResponseSchema.parse(payload);
-
-  for (const channel of channels) {
-    const org = normalizeOrg(channel.org);
-    if (org !== null) {
-      orgs.set(channel.id, org);
-    }
-  }
-
-  return channels.length < CHANNEL_PAGE_SIZE
-    ? orgs
-    : collectChannelOrgs(apiKey, page + 1, orgs);
-};
-
 export const createHolodexClient = (apiKey: string): UpstreamClient => ({
   fetchLiveStreams: async () => {
     const payload = await request(apiKey, "/live", {
@@ -129,28 +101,14 @@ export const createHolodexClient = (apiKey: string): UpstreamClient => ({
       videoId: video.id,
       title: video.title,
       channelId: video.channel.id,
-      channelName: video.channel.english_name ?? video.channel.name,
+      channelName: preferredName(
+        video.channel.english_name,
+        video.channel.name
+      ),
       channelPhoto: video.channel.photo ?? null,
       org: normalizeOrg(video.channel.org),
       viewers: video.live_viewers ?? 0,
       startedAt: video.start_actual ?? null,
     }));
   },
-
-  fetchChannelOrgs: async () => collectChannelOrgs(apiKey, 0, new Map()),
 });
-
-/**
- * Fills in the agency for streams whose embedded channel did not carry one.
- * A channel absent from the map is an independent, which is also the state the
- * map itself encodes by omitting it.
- */
-export const withChannelOrgs = (
-  streams: readonly UpstreamStream[],
-  orgs: ReadonlyMap<string, string>
-): readonly UpstreamStream[] =>
-  streams.map((stream) =>
-    stream.org === null
-      ? { ...stream, org: orgs.get(stream.channelId) ?? null }
-      : stream
-  );
