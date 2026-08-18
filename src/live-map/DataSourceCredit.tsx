@@ -14,6 +14,9 @@ export function DataSourceCredit() {
       <span className="credit-note">
         （本サイトは Holodex とは無関係の非公式なものです）
       </span>
+      {/* Required alongside the attribution: the Holodex terms oblige a privacy
+          policy reflecting the use of content taken through their API. */}
+      <a href="/privacy.html">プライバシーポリシー</a>
     </footer>
   );
 }

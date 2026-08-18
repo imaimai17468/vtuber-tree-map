@@ -6,5 +6,12 @@
   "singleQuote": false,
   "trailingComma": "es5",
   "printWidth": 80,
-  "ignorePatterns": ["node_modules", "dist", "build", "coverage", "**/*.md"]
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "public",
+    "**/*.md"
+  ]
 }
